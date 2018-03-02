@@ -3,17 +3,13 @@ import serial
 import serial.tools.list_ports
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
-import threading,os
+import threading
+import sys,os
 from websocket_server import WebsocketServer
 from Tkinter import *
 import ttk
 
-server = WebsocketServer(13254, host='127.0.0.1', loglevel=logging.INFO)
-server.timeout = 0
-
-httpserver = HTTPServer(('', 8080), SimpleHTTPRequestHandler)
 httpServerRunning = False
-
 serialServerRunning = False
 
 def serialServerLoop():
@@ -32,12 +28,11 @@ def httpToggle():
         HttpButton.configure(bg='#F00')
         httpserver.shutdown()
         httpServerRunning = False
-        os.chdir(os.path.dirname(__file__))  #back to app root 
+        os.chdir( sys.path[0] )
     else:
         HttpButton.configure(bg='#0F0')
         httpserver = HTTPServer(('', HttpSpinBoxVar.get()), SimpleHTTPRequestHandler)
         os.chdir('theme\\' + themebox.get(themebox.curselection()))
-    
         httpthread = threading.Thread(target = httpserver.serve_forever)
         httpthread.daemon = True
         httpthread.start()
@@ -56,11 +51,6 @@ def serialToggle():
         serialthread.daemon = True
         serialthread.start()
         SerialButton.configure(bg='#0F0')
-
-        
-        
-
-
     
 root = Tk()
 root.title("Web Controller viewer")
@@ -88,15 +78,16 @@ Spinbox(mainframe,from_ = 1, to = 65535,textvariable=WebSpinBoxVar).pack(anchor=
 lists = ttk.Frame(mainframe)
 Label(lists,text='Serial Port').grid(column=0,row=0)
 Label(lists,text='Theme').grid(column=1,row=0)
-serialbox = Listbox(lists)
+serialbox = Listbox(lists,exportselection=False)
 for i in serial.tools.list_ports.comports():
     serialbox.insert(END,i.device)
 serialbox.grid(column=0,row=1)
-themebox = Listbox(lists)
+themebox = Listbox(lists,exportselection=False)
 for i in os.listdir('theme'):
     themebox.insert(END,i)
 themebox.grid(column=1,row=1)
 lists.pack()
+
 HttpButton = Button(mainframe,text='Http Server',command=httpToggle)
 HttpButton.pack(side = LEFT)
 SerialButton = Button(mainframe,text='Serial Server',command=serialToggle)
