@@ -7,13 +7,27 @@
 </canvas>
 
 <script>
+
     window.onload = function() {
-    
-    theme = 'theme\\' + getAllUrlParams().theme + '\\';
+
+    var theme = 'theme\\' + getAllUrlParams().theme + '\\';
+    var config = JSON.parse(getJSON(theme + 'config.json'));
     var canvas = document.getElementById("myCanvas");
     var ctx=canvas.getContext("2d");
-    var config = JSON.parse(getJSON(theme + 'config.json'));
+    if (config.width) {
+        canvas.width = config.width;
+    }
+    if (config.height) {
+        canvas.height = config.height;
+    }
     
+    var socket = new WebSocket('ws://localhost:13254');
+    socket.onopen = function(event) {
+        console.log('Connected to: ' + event.currentTarget.url);
+    }
+    window.onunload = function(){  
+        socket.close();
+    }
     if (config.button) {
         for (i in config.button) {
             config.button[i].img = new Image();
@@ -32,31 +46,33 @@
             config.stick[i].img.src = theme + config.stick[i].file;
             }
     }
-    if (config.background) {
-        var imgBackground = new Image();
-        imgBackground.src = theme + config.background.file;
+    if (config.static) {
+        for (i in config.static) {
+            config.static[i].img = new Image();
+            config.static[i].img.src = theme + config.static[i].file;
+            }
     }
-    
-    
     
     
 
-    var socket = new WebSocket('ws://localhost:13254');
-    socket.onopen = function(event) {
-        console.log('Connected to: ' + event.currentTarget.url);
-    }
+
+
 
     socket.onmessage = function(event){
        // console.log('Recieved: ' + event.data);
        
         var controlsObj = extractControls(event.data);
         ctx.clearRect(0,0,canvas.width,canvas.height)
-       
+        
+        for (i in config.static){
+            ctx.drawImage(config.static[i].img,config.static[i].x,config.static[i].y);
+        }
+        
         switch(config.controllerType) {
             case 'GCN':
                 for (i in config.button) {
                     if (controlsObj.button[i]) {
-                        ctx.drawImage(config.button[i].img,config.button[i].X,config.button[i].Y);
+                        ctx.drawImage(config.button[i].img,config.button[i].x,config.button[i].y);
                     
                     }
                 }
@@ -68,8 +84,8 @@
                         var y = ((config.stick[i].yreverse ? 1 : -1) * config.stick[i].yrange);
                         x *= controlsObj.analog[config.stick[i].xname] 
                         y *= controlsObj.analog[config.stick[i].yname]
-                        x +=  + config.stick[i].X;
-                        y +=  + config.stick[i].Y;
+                        x +=  + config.stick[i].x;
+                        y +=  + config.stick[i].y;
                         ctx.drawImage(config.stick[i].img,x,y);
                     }else{
                     debugger;}
@@ -85,16 +101,17 @@
         var ret = {};
         ret.button = {}
         ret.analog = {}
+        // Eeems says do this https://www.irccloud.com/pastebin/zvPElZLJ/
         switch(config.controllerType) {
             case 'GCN':
-                ret.button.START = Boolean(parseInt(data[3]));
-                ret.button.A = Boolean(parseInt(data[7]));
-                ret.button.B = Boolean(parseInt(data[6]));
-                ret.button.X = Boolean(parseInt(data[5]));
-                ret.button.Y = Boolean(parseInt(data[4]));
-                ret.button.Z = Boolean(parseInt(data[11]));
-                ret.button.L = Boolean(parseInt(data[9]));
-                ret.button.R = Boolean(parseInt(data[10]));
+                ret.button.START = Boolean(~~data[3]);
+                ret.button.A = Boolean(~~data[7]);
+                ret.button.B = Boolean(~~data[6]);
+                ret.button.X = Boolean(~~data[5]);
+                ret.button.Y = Boolean(~~data[4]);
+                ret.button.Z = Boolean(~~data[11]);
+                ret.button.L = Boolean(~~data[9]);
+                ret.button.R = Boolean(~~data[10]);
                 //Todo analog shennangins 
                 
                 ret.analog.joyX = (getMultiByte(data,16)-128)/128;
@@ -110,6 +127,7 @@
         }
         return ret;
     }
+    
 }
  
 /*            byte val = 0;

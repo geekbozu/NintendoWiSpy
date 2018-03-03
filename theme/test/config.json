@@ -3,25 +3,47 @@
   "theme": "Canadian Gamecube",
   "author": "Geekboy1011",
   "cite": false,
+  "width": 200,
+  "height": 50,
   "button": {
     "A": {
-      "X": 0,
-      "Y": 0,
+      "x": 35,
+      "y": 21,
       "file": "A.png"
     },
     "B": {
-      "X": 15,
-      "Y": 0,
+      "x": 54,
+      "y": 21,
       "file": "B.png"
     },
+    "L": {
+      "x": 71,
+      "y": 21,
+      "file": "L.png"
+    },
+    "R": {
+      "x": 85,
+      "y": 21,
+      "file": "R.png"
+    },
     "X": {
-      "X": 30,
-      "Y": 0,
+      "x": 102,
+      "y": 21,
       "file": "X.png"
     },
+    "Y": {
+      "x": 119,
+      "y": 21,
+      "file": "Y.png"
+    },
+    "Z": {
+      "x": 134,
+      "y": 21,
+      "file": "Z.png"
+    },
     "START": {
-      "X": 30,
-      "Y": 0,
+      "x": 150,
+      "y": 21,
       "file": "Start.png"
     }
   }, 
@@ -30,10 +52,10 @@
         "xname": "joyX",
         "yname": "joyY",
         "file": "Stick.png",
-        "X": 40,
-        "Y": 40,
-        "xrange": 30,
-        "yrange": 30,
+        "x": 14,
+        "y": 29,
+        "xrange": 16,
+        "yrange": 16,
         "xreverse": false,
         "yreverse": false
     },
@@ -41,12 +63,19 @@
         "xname": "cstickX",
         "yname": "cstickY",
         "file": "Stick.png",
-        "X": 40,
-        "Y": 40,
-        "xrange": 30,
-        "yrange": 30,
+        "x": 179,
+        "y": 29,
+        "xrange": 16,
+        "yrange": 16,
         "xreverse": false,
         "yreverse": false
+    }
+  },
+  "static": {
+    "background": {
+        "x": 0,
+        "y": 0,
+        "file": "background.png"
     }
   }
 }

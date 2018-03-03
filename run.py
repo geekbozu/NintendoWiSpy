@@ -15,9 +15,10 @@ def serialServerLoop():
     ser = serial.Serial(serialbox.get(serialbox.curselection()))
     ser.baudrate = SerialSpinBoxVar.get()
     while serialServerRunning:
-        line = ser.readline()
-        server.send_message_to_all(line)
         server.handle_request()
+        line = ser.readline()
+        #server.handle_request()
+        server.send_message_to_all(line)
     server.shutdown()
 
 def httpToggle():
@@ -44,13 +45,15 @@ def serialToggle():
         serialServerRunning = False
     else:
         server = WebsocketServer(WebSpinBoxVar.get(), host='127.0.0.1', loglevel=logging.INFO)
+        server.set_fn_new_client(new_client)
         server.timeout = 0
         serialServerRunning = True
         serialthread = threading.Thread(target = serialServerLoop)
         serialthread.daemon = True
         serialthread.start()
         SerialButton.configure(bg='#0F0')
-    
+def new_client(client,server):
+    print "New client gotten ", client
 root = Tk()
 root.title("Web Controller viewer")
 mainframe = ttk.Frame(root, padding="3 3 12 12")
