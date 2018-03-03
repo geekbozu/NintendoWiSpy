@@ -1,0 +1,52 @@
+{
+  "controllerType": "GCN",
+  "theme": "Canadian Gamecube",
+  "author": "Geekboy1011",
+  "cite": false,
+  "button": {
+    "A": {
+      "X": 0,
+      "Y": 0,
+      "file": "A.png"
+    },
+    "B": {
+      "X": 15,
+      "Y": 0,
+      "file": "B.png"
+    },
+    "X": {
+      "X": 30,
+      "Y": 0,
+      "file": "X.png"
+    },
+    "START": {
+      "X": 30,
+      "Y": 0,
+      "file": "Start.png"
+    }
+  }, 
+  "stick": {
+    "joyStick": {
+        "xname": "joyX",
+        "yname": "joyY",
+        "file": "Stick.png",
+        "X": 40,
+        "Y": 40,
+        "xrange": 30,
+        "yrange": 30,
+        "xreverse": false,
+        "yreverse": false
+    },
+    "cStick": {
+        "xname": "cstickX",
+        "yname": "cstickY",
+        "file": "Stick.png",
+        "X": 40,
+        "Y": 40,
+        "xrange": 30,
+        "yrange": 30,
+        "xreverse": false,
+        "yreverse": false
+    }
+  }
+}
