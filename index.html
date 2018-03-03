@@ -14,6 +14,7 @@
     var config = JSON.parse(getJSON(theme + 'config.json'));
     var canvas = document.getElementById("myCanvas");
     var ctx=canvas.getContext("2d");
+    
     if (config.width) {
         canvas.width = config.width;
     }
@@ -21,7 +22,7 @@
         canvas.height = config.height;
     }
     
-    var socket = new WebSocket('ws://localhost:13254');
+    var socket = new WebSocket('ws://' + getAllUrlParams().websocketserver +':'+getAllUrlParams().websockport);
     socket.onopen = function(event) {
         console.log('Connected to: ' + event.currentTarget.url);
     }
@@ -35,7 +36,7 @@
             }
     }
     if (config.analog) {
-        for (i in config.button) {
+        for (i in config.analog) {
             config.analog[i].img = new Image();
             config.analog[i].img.src = theme + config.analog[i].file;
             }
@@ -53,11 +54,6 @@
             }
     }
     
-    
-
-
-
-
     socket.onmessage = function(event){
        // console.log('Recieved: ' + event.data);
        
@@ -90,6 +86,52 @@
                     }else{
                     debugger;}
                 }
+                
+                for (i in config.analog) {
+                   // debugger;
+                    var x = config.analog[i].x
+                    var y = config.analog[i].y //Location on screen
+                    //var width = 
+                    //var height = 
+                    switch (config.analog[i].direction){  //SubX SubY Starting point
+                        case 'up':
+                            var sx = 0;
+                            var sheight = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.height
+                            var swidth = config.analog[i].img.width
+                            var sy = config.analog[i].img.height - sheight;
+                            y += sy //+ config.analog[i].img.height;
+                            break;
+                        case 'down':
+                            var sx = 0;
+                            var sy = 0;              
+                            var swidth = config.analog[i].img.width
+                            var sheight = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.height
+                            break;
+                        case 'left':
+                            var sy = 0;
+                            var swidth = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.width
+                            var sheight = config.analog[i].img.height
+                            var sx = config.analog[i].img.width - swidth;
+                            x += config.analog[i].img.width
+                            x -= swidth;
+                            
+                            break;
+                        case 'right':
+                            var sx = 0;
+                            var sy = 0;
+                            var sheight = config.analog[i].img.height
+                            var swidth = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.width
+                            break;
+                        default:
+                            var sx = 0;
+                            var sy = 0;
+                            break;
+                    }
+                    //config.analog[i].axis
+                    //controlObj.analog[i]
+                    //context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);
+                    ctx.drawImage(config.analog[i].img,sx,sy,swidth,sheight,x,y,swidth,sheight);
+                }
                 break;
             default:
                 console.log("No Controller type");
@@ -118,8 +160,8 @@
                 ret.analog.joyY = (getMultiByte(data,16+8)-128)/128;
                 ret.analog.cstickX = (getMultiByte(data,16+16)-128)/128;
                 ret.analog.cstickY = (getMultiByte(data,16+24)-128)/128;
-                ret.analog.lTrig = getMultiByte(data,16+32);
-                ret.analog.rTrig = getMultiByte(data,16+40);
+                ret.analog.lTrig = getMultiByte(data,16+32)/256;
+                ret.analog.rTrig = getMultiByte(data,16+40)/256;
                 
                 break;
             default:

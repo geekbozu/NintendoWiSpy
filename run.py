@@ -5,7 +5,7 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
 from websocket_server import WebsocketServer
 from Tkinter import *
-import ttk
+import ttk,tkMessageBox
 
 httpServerRunning = False
 serialServerRunning = False
@@ -17,9 +17,10 @@ def serialServerLoop():
     while serialServerRunning:
         server.handle_request()
         line = ser.readline()
-        #server.handle_request()
+        server.handle_request()
         server.send_message_to_all(line)
-    server.shutdown()
+        
+    server.server_close()
 
 def httpToggle():
     global httpServerRunning 
@@ -54,6 +55,20 @@ def serialToggle():
         SerialButton.configure(bg='#0F0')
 def new_client(client,server):
     print "New client gotten ", client
+    
+def genUrl():
+    if not len(WebSockUrlEntryVar.get()):
+        tkMessageBox.showerror("Url Error","WebSocketServer Url can not be blank!")
+        return
+    try:
+        val = "http://localhost:{}/?theme={}&websockport={}&websocketserver={}".format(HttpSpinBoxVar.get(),themebox.get(themebox.curselection()),WebSpinBoxVar.get(),WebSockUrlEntryVar.get())
+    except TclError:
+        tkMessageBox.showerror("Input Error","Bad input. Ensure all items are selected")
+        return
+        
+    root.clipboard_clear()
+    root.clipboard_append(val)
+    
 root = Tk()
 root.title("Web Controller viewer")
 mainframe = ttk.Frame(root, padding="3 3 12 12")
@@ -67,12 +82,17 @@ WebSpinBoxVar = IntVar(mainframe)
 WebSpinBoxVar.set("13254")
 HttpSpinBoxVar = IntVar(mainframe)
 HttpSpinBoxVar.set("8888")
+WebSockUrlEntryVar = StringVar(mainframe)
+WebSockUrlEntryVar.set("localhost")
 
 Label(mainframe,text='Serial BaudRate').pack(anchor=N)
 Spinbox(mainframe,textvariable=SerialSpinBoxVar).pack(anchor=N)
 
 Label(mainframe,text='HTTPSERVER port').pack(anchor=N)
 Spinbox(mainframe,from_ = 1, to = 65535,textvariable=HttpSpinBoxVar).pack(anchor=N)
+
+Label(mainframe,text='WebSocket Url').pack(anchor=N)
+Entry(mainframe,textvariable=WebSockUrlEntryVar).pack(anchor=N)
 
 Label(mainframe,text='WebSocket Port').pack(anchor=N)
 Spinbox(mainframe,from_ = 1, to = 65535,textvariable=WebSpinBoxVar).pack(anchor=N)
@@ -94,7 +114,7 @@ HttpButton = Button(mainframe,text='Http Server',command=httpToggle)
 HttpButton.pack(side = LEFT)
 SerialButton = Button(mainframe,text='Serial Server',command=serialToggle)
 SerialButton.pack(side = LEFT)
-Button(mainframe,text='Generate Url').pack(side = LEFT)
+Button(mainframe,text='Generate Url',command=genUrl).pack(side = LEFT)
 root.mainloop()
 
     

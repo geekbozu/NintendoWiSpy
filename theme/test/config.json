@@ -71,11 +71,27 @@
         "yreverse": false
     }
   },
+  "analog": {
+    "lTrig": {
+        "axis": "lTrig",
+        "file": "L.png",
+        "x": 71,
+        "y": 21,
+        "direction": "left"
+    },
+    "rTrig": {
+        "axis": "rTrig",
+        "file": "R.png",
+        "x": 85,
+        "y": 21,
+        "direction": "up"
+    }
+  },
   "static": {
     "background": {
         "x": 0,
         "y": 0,
-        "file": "background.png"
+        "file": "back.png"
     }
   }
 }
