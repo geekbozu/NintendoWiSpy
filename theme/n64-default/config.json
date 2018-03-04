@@ -1,0 +1,127 @@
+{
+  "controllerType": "N64",
+  "theme": "Stolen N64",
+  "author": "NintendoSpy",
+  "cite": false,
+  "width": 176,
+  "height": 176,
+  "button": {
+  "A": {
+      "x": 123,
+      "y": 63,
+      "width": 17,
+      "height": 17,
+      "file": "circle.png"
+    },
+    "B": {
+      "x": 110,
+      "y": 50,
+      "width": 17,
+      "height": 17,
+      "file": "circle.png"
+    },
+    "L": {
+      "x": 24,
+      "y": 14,
+      "width": 27,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "R": {
+      "x": 128,
+      "y": 15,
+      "width": 27,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "Z": {
+      "x": 56,
+      "y": 95,
+      "width": 10,
+      "height": 24,
+      "file": "circle.png"
+    },
+    "START": {
+      "x": 79,
+      "y": 52,
+      "width": 20,
+      "height": 20,
+      "file": "circle.png"
+    },
+    "Cup": {
+      "x": 137,
+      "y": 36,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "Cleft": {
+      "x": 129,
+      "y": 44,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "Cright": {
+      "x": 146,
+      "y": 44,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "Cdown": {
+      "x": 137,
+      "y": 52,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "down": {
+      "x": 32,
+      "y": 59,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "up": {
+      "x": 32,
+      "y": 43,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "left": {
+      "x": 24,
+      "y": 51,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    },
+    "right": {
+      "x": 41,
+      "y": 51,
+      "width": 10,
+      "height": 10,
+      "file": "circle.png"
+    }
+  }, 
+  "stick": {
+    "joyStick": {
+        "xname": "joyX",
+        "yname": "joyY",
+        "file": "stick.png",
+        "x": 81,
+        "y": 85,
+        "xrange": 12,
+        "yrange": 12
+    }
+  },
+  "static": {
+    "background": {
+        "x": 0,
+        "y": 0,
+        "file": "pad.png"
+    }
+  }
+}
+

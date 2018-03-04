@@ -55,8 +55,9 @@
     }
     
     socket.onmessage = function(event){
-        //console.log('Recieved: ' + event.data);
-       
+       // console.log('Recieved: ' + event.data);
+        if (event.data == 'Connected')
+            return;
         var controlsObj = extractControls(event.data);
         ctx.clearRect(0,0,canvas.width,canvas.height)
         
@@ -66,9 +67,15 @@
         
         switch(config.controllerType) {
             case 'GCN':
+            case 'N64':
                 for (i in config.button) {
                     if (controlsObj.button[i]) {
-                        ctx.drawImage(config.button[i].img,config.button[i].x,config.button[i].y);
+                        if (config.button[i].width && config.button[i].height){
+                            ctx.drawImage(config.button[i].img,config.button[i].x,config.button[i].y,config.button[i].width,config.button[i].height);
+                        }
+                        else {
+                            ctx.drawImage(config.button[i].img,config.button[i].x,config.button[i].y);
+                        }
                     
                     }
                 }
@@ -162,6 +169,27 @@
                 ret.analog.cstickY = (getMultiByte(data,16+24)-128)/128;
                 ret.analog.lTrig = getMultiByte(data,16+32)/256;
                 ret.analog.rTrig = getMultiByte(data,16+40)/256;
+                
+                break;
+            case 'N64':
+                
+                ret.button.START = Boolean(~~data[3]);
+                ret.button.A = Boolean(~~data[0]);
+                ret.button.B = Boolean(~~data[1]);
+                ret.button.Z = Boolean(~~data[2]);
+                ret.button.L = Boolean(~~data[10]);
+                ret.button.R = Boolean(~~data[11]);
+                ret.button.Up = Boolean(~~data[4]);
+                ret.button.Down = Boolean(~~data[5]);
+                ret.button.Left = Boolean(~~data[6]);
+                ret.button.Right = Boolean(~~data[7]);
+                ret.button.Cup = Boolean(~~data[12]);
+                ret.button.Cdown = Boolean(~~data[13]);
+                ret.button.Cleft = Boolean(~~data[14]);
+                ret.button.Cright = Boolean(~~data[15]);
+                
+                ret.analog.joyX = getMultiByte(data,16)/128;
+                ret.analog.joyY = getMultiByte(data,16+8)/128;
                 
                 break;
             default:
