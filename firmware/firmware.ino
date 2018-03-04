@@ -1,10 +1,11 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 
+#include <SerialCommands.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <ArduinoOTA.h>
-#include "secrets.h"
 
 #define PIN_READ( pin )  GPIP(pin)
 #define PINC_READ( pin ) digitalRead(pin)
@@ -13,7 +14,7 @@
 
 #define MODEPIN_SNES 0
 #define MODEPIN_N64  1
-#define MODEPIN_GC   2
+#define MODEPIN_GC   4
 
 #define N64_PIN        5
 #define N64_PREFIX     9
@@ -42,12 +43,17 @@
 
 // ---------- Uncomment one of these options to select operation mode --------------
 //#define MODE_GC
-#define MODE_N64
+//#define MODE_N64
 //#define MODE_SNES
 //#define MODE_NES
 // Bridge one of the analog GND to the right analog IN to enable your selected mode
-//#define MODE_DETECT
+#define MODE_DETECT
 // ---------------------------------------------------------------------------------
+char use_ssid[32] = "";
+char use_password[32] = "";
+
+char serial_command_buffer_[128];
+SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\r\n", " ");
 
 ESP8266WiFiMulti WiFiMulti;
 WebSocketsServer webSocket = WebSocketsServer(18881);
@@ -62,6 +68,40 @@ unsigned char N64_PREFIX_STRING[9] = {0,0,0,0,0,0,0,1,1};
 
 #define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
 
+//This is the default handler, and gets called when no other command matches. 
+void cmd_unrecognized(SerialCommands* sender, const char* cmd)
+{
+  sender->GetSerial()->print("Unrecognized command [");
+  sender->GetSerial()->print(cmd);
+  sender->GetSerial()->println("]");
+}
+void cmd_rwifi(SerialCommands* sender){
+    sender->GetSerial()->println(use_password);
+  sender->GetSerial()->println(use_ssid);
+}
+void cmd_wifi(SerialCommands* sender)
+{
+  char* ssid = sender->Next();
+  char* password = sender->Next();
+  if (ssid == NULL)
+  {
+    sender->GetSerial()->println("ERROR SSID");
+    return;
+  }
+  
+  
+  if (password == NULL)
+  {
+    sender->GetSerial()->println("ERROR PASS");
+    return;
+  }
+  strcpy(use_password, password);
+  strcpy ( use_ssid, ssid);
+  saveCredentials();
+}
+
+SerialCommand cmd_wifi_write_("WW", cmd_wifi);
+SerialCommand cmd_wifi_read_("RW", cmd_rwifi);
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
@@ -141,12 +181,16 @@ void gc_n64_isr()
 void setup()
 {
    Serial.begin( 115200 );
-
+   
+   serial_commands_.SetDefaultHandler(cmd_unrecognized);
+   serial_commands_.AddCommand(&cmd_wifi_read_);
+   serial_commands_.AddCommand(&cmd_wifi_write_);
    Serial.println("Connecting");
-   WiFiMulti.addAP(SECRETSSID, SECRETPASSKEY);
+   loadCredentials();
+   WiFiMulti.addAP(use_ssid, use_password);
 
    while(WiFiMulti.run() != WL_CONNECTED) {
-        delay(100);
+        serial_commands_.ReadSerial();
    }
    Serial.print("Connected: ");
    Serial.println(WiFi.localIP());
@@ -155,8 +199,10 @@ void setup()
    ArduinoOTA.begin();
    ArduinoOTA.setHostname("NintendoSpy");
    pinMode(N64_PIN,INPUT);
-   pinMode(GC_PIN,INPUT);
+   pinMode(N64_PIN,INPUT);
+   pinMode(4,INPUT);
    attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
+    
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,6 +313,33 @@ inline void loop_NES()
     interrupts();
     sendRawData( 0 , NES_BITCOUNT );
 }
+/* Load WLAN credentials from EEPROM */
+void loadCredentials() {
+  EEPROM.begin(512);
+  EEPROM.get(0, use_ssid);
+  EEPROM.get(0+sizeof(use_ssid), use_password);
+  char ok[2+1];
+  EEPROM.get(0+sizeof(use_ssid)+sizeof(use_password), ok);
+  EEPROM.end();
+  if (String(ok) != String("OK")) {
+    use_ssid[0] = 0;
+    use_password[0] = 0;
+  }
+  Serial.println("Recovered credentials:");
+  Serial.println(use_ssid);
+  Serial.println(strlen(use_password)>0?"********":"<no password>");
+}
+
+/** Store WLAN credentials to EEPROM */
+void saveCredentials() {
+  EEPROM.begin(512);
+  EEPROM.put(0, use_ssid);
+  EEPROM.put(0+sizeof(use_ssid), use_password);
+  char ok[2+1] = "OK";
+  EEPROM.put(0+sizeof(use_ssid)+sizeof(use_password), ok);
+  EEPROM.commit();
+  EEPROM.end();
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arduino sketch main loop definition.
@@ -281,17 +354,14 @@ void loop()
 #elif defined MODE_NES
     loop_NES();
 #elif defined MODE_DETECT
-    if( !PINC_READ( MODEPIN_SNES ) ) {
-        loop_SNES();
-    } else if( !PINC_READ( MODEPIN_N64 ) ) {
-        loop_N64();
-    } else if( !PINC_READ( MODEPIN_GC ) ) {
-        loop_GC();
+    if( PIN_READ( MODEPIN_GC ) ) {
+        loop_gc();
     } else {
-        loop_NES();
+        loop_N64();
     }
 #endif
 
     webSocket.loop();                           // constantly check for websocket events
     ArduinoOTA.handle();                        //and updates.
+    serial_commands_.ReadSerial();
 }
