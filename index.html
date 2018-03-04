@@ -179,18 +179,23 @@
                 ret.button.Z = Boolean(~~data[2]);
                 ret.button.L = Boolean(~~data[10]);
                 ret.button.R = Boolean(~~data[11]);
-                ret.button.Up = Boolean(~~data[4]);
-                ret.button.Down = Boolean(~~data[5]);
-                ret.button.Left = Boolean(~~data[6]);
-                ret.button.Right = Boolean(~~data[7]);
+                ret.button.up = Boolean(~~data[4]);
+                ret.button.down = Boolean(~~data[5]);
+                ret.button.left = Boolean(~~data[6]);
+                ret.button.right = Boolean(~~data[7]);
                 ret.button.Cup = Boolean(~~data[12]);
                 ret.button.Cdown = Boolean(~~data[13]);
                 ret.button.Cleft = Boolean(~~data[14]);
                 ret.button.Cright = Boolean(~~data[15]);
                 
-                ret.analog.joyX = getMultiByte(data,16)/128;
-                ret.analog.joyY = getMultiByte(data,16+8)/128;
-                
+                ret.analog.joyX = (getMultiByte(data,16));
+                ret.analog.joyY = (getMultiByte(data,16+8));
+                if (ret.analog.joyX > 127)
+                    ret.analog.joyX -= 256;
+                if (ret.analog.joyY > 127)
+                    ret.analog.joyY -= 256;
+                ret.analog.joyX /= 128;
+                ret.analog.joyY /= 128;
                 break;
             default:
                 console.log("No Controller type");

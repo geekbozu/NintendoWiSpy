@@ -41,8 +41,8 @@
 
 
 // ---------- Uncomment one of these options to select operation mode --------------
-#define MODE_GC
-//#define MODE_N64
+//#define MODE_GC
+#define MODE_N64
 //#define MODE_SNES
 //#define MODE_NES
 // Bridge one of the analog GND to the right analog IN to enable your selected mode
@@ -210,13 +210,13 @@ inline void loop_gc()
             }
             memset(rawData,0,sizeof(rawData)); //Clear frame incase we got bad frame
             trans_pending = false;
+            unsigned long startmillis = micros();
+            while((micros()-startmillis) < 100 ){
+              if(!digitalRead(5)){
+                startmillis = micros();
+              }
+            }
             attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
-    }
-    unsigned long startmillis = micros();
-    while((micros()-startmillis) < 100 ){
-        if(!digitalRead(5)){
-          startmillis = micros();
-        }
     }
 }
 
@@ -242,16 +242,14 @@ inline void loop_N64()
             }
             memset(rawData,0,sizeof(rawData)); //Clear frame incase we got bad frame
             trans_pending = false;
+            unsigned long startmillis = micros();
+            while((micros()-startmillis) < 100 ){
+              if(!digitalRead(5)){
+                startmillis = micros();
+              }
+            }
             attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
     }
-    unsigned long startmillis = micros();
-    while((micros()-startmillis) < 100 ){
-        if(!digitalRead(5)){
-          startmillis = micros();
-        }
-    }
-   
-    
 }
 
 inline void loop_SNES()
