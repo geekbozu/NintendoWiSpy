@@ -52,21 +52,23 @@
 char use_ssid[32] = "";
 char use_password[32] = "";
 
-char serial_command_buffer_[128];
-SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\r\n", " ");
-
-ESP8266WiFiMulti WiFiMulti;
-WebSocketsServer webSocket = WebSocketsServer(18881);
+#define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
 
 // Declare some space to store the bits we read from a controller.
 unsigned char rawData[ 128 ];
 char rawData2[ 128 ];
 unsigned char defined_bits;
 bool trans_pending = false;
+bool use_serial = false;
 unsigned char GC_PREFIX_STRING[25] = {0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1};
 unsigned char N64_PREFIX_STRING[9] = {0,0,0,0,0,0,0,1,1};
 
-#define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
+char serial_command_buffer_[128];
+SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\r\n", " ");
+
+ESP8266WiFiMulti WiFiMulti;
+WebSocketsServer webSocket = WebSocketsServer(18881);
+
 
 //This is the default handler, and gets called when no other command matches. 
 void cmd_unrecognized(SerialCommands* sender, const char* cmd)
@@ -99,9 +101,26 @@ void cmd_wifi(SerialCommands* sender)
   strcpy ( use_ssid, ssid);
   saveCredentials();
 }
-
+void cmd_tserial(SerialCommands* sender){
+  char* s = sender->Next();
+  if (s==NULL){
+     sender->GetSerial()->println("BAD MODE");
+     return;
+  }
+  if (s[0] == '0'){
+    use_serial=false;  
+    sender->GetSerial()->println("WEB SOCKET MODE");
+    return;
+  }
+  if (s[0] == '1'){
+    use_serial=true;
+    sender->GetSerial()->println("SERIAL MODE");
+  }
+ 
+}
 SerialCommand cmd_wifi_write_("WW", cmd_wifi);
 SerialCommand cmd_wifi_read_("RW", cmd_rwifi);
+SerialCommand cmd_tog_ser_("TS", cmd_tserial);
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
@@ -137,6 +156,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     }
 
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ISR for spying GC and N64 controller commands
 // Performs a read cycle from one of Nintendo's one-wire interface based controllers.
@@ -185,6 +205,7 @@ void setup()
    serial_commands_.SetDefaultHandler(cmd_unrecognized);
    serial_commands_.AddCommand(&cmd_wifi_read_);
    serial_commands_.AddCommand(&cmd_wifi_write_);
+    serial_commands_.AddCommand(&cmd_tog_ser_);
    Serial.println("Connecting");
    loadCredentials();
    WiFiMulti.addAP(use_ssid, use_password);
@@ -242,12 +263,20 @@ inline void loop_gc()
     if (trans_pending){
         if (memcmp(rawData,GC_PREFIX_STRING,sizeof(GC_PREFIX_STRING)) == 0){  //Check that we recieved a packet validly
                 for( unsigned char i = GC_PREFIX ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
-                rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
-                
+                  rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
+                  if (use_serial){
+                    Serial.write(rawData[i]);
+                  }
                 }
-            webSocket.broadcastTXT(rawData+GC_PREFIX,GC_BITCOUNT);
+            if (use_serial){
+              Serial.write(SPLIT);
             }
             else {
+              webSocket.broadcastTXT(rawData+GC_PREFIX,GC_BITCOUNT);  
+            }
+            
+        }
+        else {
               for( unsigned char i = 0 ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
                     rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
                     //Serial.write(rawData[i]);
@@ -258,7 +287,7 @@ inline void loop_gc()
             trans_pending = false;
             unsigned long startmillis = micros();
             while((micros()-startmillis) < 100 ){
-              if(!digitalRead(5)){
+              if(!PIN_READ(5)){
                 startmillis = micros();
               }
             }
@@ -274,10 +303,16 @@ inline void loop_N64()
            //Serial.print("Good Frame: ");
                 for( unsigned char i = N64_PREFIX ; i < N64_PREFIX +N64_BITCOUNT; i++ ) {
                     rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
-                    //Serial.write(rawData[i]);
+                    if (use_serial){
+                      Serial.write(rawData[i]);
+                    }
                 }
-           // Serial.println(SPLIT);
-            webSocket.broadcastTXT(rawData+N64_PREFIX,N64_BITCOUNT);
+                if (use_serial){
+                  Serial.write(SPLIT);    
+                }
+                else {
+                  webSocket.broadcastTXT(rawData+N64_PREFIX,N64_BITCOUNT);
+                }
             }
             else {
               for( unsigned char i = 0 ; i < N64_PREFIX +N64_BITCOUNT; i++ ) {
@@ -290,7 +325,7 @@ inline void loop_N64()
             trans_pending = false;
             unsigned long startmillis = micros();
             while((micros()-startmillis) < 100 ){
-              if(!digitalRead(5)){
+              if(!PIN_READ(5)){
                 startmillis = micros();
               }
             }
@@ -313,6 +348,7 @@ inline void loop_NES()
     interrupts();
     sendRawData( 0 , NES_BITCOUNT );
 }
+
 /* Load WLAN credentials from EEPROM */
 void loadCredentials() {
   EEPROM.begin(512);

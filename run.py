@@ -14,12 +14,14 @@ def serialServerLoop():
     global serialServerRunning
     ser = serial.Serial(serialbox.get(serialbox.curselection()))
     ser.baudrate = SerialSpinBoxVar.get()
+    ser.write('TS 1\r\n')
     while serialServerRunning:
         server.handle_request()
         line = ser.readline()
         server.handle_request()
         server.send_message_to_all(line)
-        
+    ser.write('TS 0\r\n')
+    ser.close()
     server.server_close()
 
 def httpToggle():
