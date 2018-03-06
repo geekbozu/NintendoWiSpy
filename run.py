@@ -1,5 +1,5 @@
 import logging
-import threading,sys,os
+import threading,sys,os,webbrowser
 import serial,serial.tools.list_ports
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
@@ -70,13 +70,21 @@ def genUrl():
         
     root.clipboard_clear()
     root.clipboard_append(val)
+def authorLink(event):
+    webbrowser.open_new(r"http://keepdream.in")
+def homeLink(event):
+    webbrowser.open_new(r"https://github.com/geekbozu/NintendoWiSpy")
 def aboutWindow():
     window = Tk()
     window.title("About NintendoWiSpy")
     Label(window,text='NintendoWiSpy').pack(anchor=N)
     Label(window,text='A WiFi enabled Live input viewer for GCN/N64').pack(anchor=N)
-    Label(window,text="Author: Timothy 'Geekboy1011' Keller").pack()
-    Label(window,text="HomePage: https://github.com/geekbozu/NintendoWiSpy").pack()
+    a = Label(window,text="Timothy 'Geekboy1011' Keller",fg="blue", cursor="hand2")
+    h = Label(window,text="https://github.com/geekbozu/NintendoWiSpy",fg="blue", cursor="hand2")
+    a.bind("<Button-1>", authorLink)
+    h.bind("<Button-1>", homeLink)
+    a.pack()
+    h.pack()
     licframe = LabelFrame(window, text="MIT License:")
     licframe.pack(expand="yes",fill="both")
     
@@ -98,7 +106,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     
 if __name__ == "__main__":        
     root = Tk()
-    root.title("Web Controller viewer")
+    root.title("NintendoWiSpy")
     mainframe = ttk.Frame(root, padding="3 3 12 12")
     mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
     mainframe.columnconfigure(0, weight=1)

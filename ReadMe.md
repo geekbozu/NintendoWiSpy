@@ -9,9 +9,13 @@ A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used f
 - Supports OG NintendoSpy Hardware
 - Supports ESP8266 Hardware with wifi/Serial support
 - Custom Themes in a JSON format
-
+## Requirements
+- Python2.7
+- PySerial 
+- [python-websocket-server](https://github.com/Pithikos/python-websocket-server)
 ## Python Interface
-Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.
+Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.  
+![](https://i.imgur.com/SqLejSL.png)
 ##### Serial Baudrate:
 - Baud Rate for connected serial device.
 ##### HTTPSERVER port:
@@ -36,51 +40,53 @@ Themes are located in theme\
 See included themes for fully functional examples
 ```
 {
-  "controllerType": "GCN",
-  "theme": "Canadian Gamecube",
-  "author": "Geekboy1011",
-  "width": 200,
-  "height": 50,
-  "button": {
-    "A": {
-      "x": 35,
-      "y": 21,
-      "file": "A.png"
+  "controllerType": "GCN",          Controller Type
+  "theme": "Canadian Gamecube",     Theme Name
+  "author": "Geekboy1011",          Theme Author
+  "width": 200,                     Width of theme
+  "height": 50,                     Height of Theme
+  "button": {                       Button Object
+    "A": {                          Button
+      "x": 35,                      X Coordinate
+      "y": 21,                      Y Coordinate
+      "file": "A.png",              Image File Nam
+      "width": 10,                  Scale image to width (Optional)
+      "height": 10                  Scale image to height (Optional)
     }
   }, 
-  "stick": {
-    "joyStick": {
-        "xname": "joyX",
-        "yname": "joyY",
-        "file": "Stick.png",
-        "x": 14,
-        "y": 29,
-        "xrange": 16,
-        "yrange": 16,
-        "xreverse": false,
-        "yreverse": false
+  "stick": {                        Stick Object
+    "joyStick": {                   Stick name
+        "xname": "joyX",            X Axis
+        "yname": "joyY",            Y Axis
+        "file": "Stick.png",        Image File Name
+        "x": 14,                    X Coordinate
+        "y": 29,                    Y Coordinate
+        "xrange": 16,               Range in pixels to move image over axis 
+        "yrange": 16,               Range in pixels to move image over axis
+        "xreverse": false,          Reverse X axis
+        "yreverse": false           Reverse Y axis
     }
   },
-  "analog": {
-    "lTrig": {
-        "axis": "lTrig",
-        "file": "L.png",
-        "x": 71,
-        "y": 21,
-        "direction": "left"
-    }
-  },
-  "static": {
-    "background": {
-        "x": 0,
-        "y": 0,
-        "file": "back.png"
+  "analog": {                       Analog Object
+    "lTrig": {                      name
+        "axis": "lTrig",            Axis
+        "file": "L.png",            Image File Name
+        "x": 71,                    X Coordinate
+        "y": 21,                    Y Coordinate
+        "direction": "left"         Image Render Direction
+    }                               
+  },                                
+  "static": {                       Static Object
+    "background": {                 Name
+        "x": 0,                     X coordinate
+        "y": 0,                     Y Coordinate
+        "file": "back.png"          Image File Name
     }
   }
 }
 ```
-### Theme Objects:  
-#### Root:
+## Theme Objects:  
+### Root:
 Stores global information for the theme.
 - controllerType: GCN | N64  
 - Theme: Theme Name
@@ -88,7 +94,7 @@ Stores global information for the theme.
 - width: Width of theme
 - height: height of theme
 
-#### button:
+### button:
 Buttons when pressed show the image file.
 ##### Available Buttons GCN
 - A B X Y L R START Z  
@@ -96,14 +102,7 @@ Buttons when pressed show the image file.
 ##### Available Buttons N64
 - A B L R START up down left right Cup Cleft Cright Cdown
 
-##### arguments:
-- x: X Coordinate in theme
-- y: Y coordinate in theme
-- file: Image file name
-- width: Width to scale image to (optional)
-- height: height to scale image to (optional)
-
-#### stick:
+### stick:
 Shows a image based off of the Stick Location.
 ##### Available stick GCN:
 - joyStick cStick  
@@ -114,17 +113,7 @@ Shows a image based off of the Stick Location.
 - stickname + X or Y
 - EG: joyStickX, joyStickY
 
-##### arguments:
-- xname: joystick axis
-- yname: joystick axis
-- file: Image name
-- x: X Coordinates
-- y: Y Coordinate
-- xrange: Pixes to move over stick X range
-- yrange: Pixels to move over stick Y range
-- xreverse: Reverse X axis
-- yreverse: Reverse Y Axis
-#### analog:
+### analog:
 Shows an image starting from "direction" based on Analog position
 ##### Available analog GCN:
 - LTrig rTrig
@@ -132,18 +121,8 @@ Shows an image starting from "direction" based on Analog position
 - NONE
 ##### available Axis
 - See stick axis + available analog
-##### arguments:
-- axis: Axis
-- file: Image Name
-- x: X Coord
-- y: Y Coord
-- direction: Direction to sweep image
-#### static:
+### static:
 Displays a static image.
-##### arguments:
-- x: X Coordinate
-- y: Y Coordinate
-- file: Image Name
 
 ### Hardware
 TO DOCUMENT 
