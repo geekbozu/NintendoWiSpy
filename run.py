@@ -124,10 +124,10 @@ if __name__ == "__main__":
     Label(mainframe,text='HTTPSERVER port').pack(anchor=N)
     Spinbox(mainframe,from_ = 1, to = 65535,textvariable=HttpSpinBoxVar).pack(anchor=N)
     
-    Label(mainframe,text='WebSocket Url').pack(anchor=N)
+    Label(mainframe,text='WebSocket Host').pack(anchor=N)
     Entry(mainframe,textvariable=WebSockUrlEntryVar).pack(anchor=N)
     
-    Label(mainframe,text='WebSocket Port').pack(anchor=N)
+    Label(mainframe,text='Display Socket Port').pack(anchor=N)
     Spinbox(mainframe,from_ = 1, to = 65535,textvariable=WebSpinBoxVar).pack(anchor=N)
     
     lists = ttk.Frame(mainframe)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     
     HttpButton = Button(mainframe,text='Http Server',command=httpToggle)
     HttpButton.pack(side = LEFT)
-    SerialButton = Button(mainframe,text='Serial Server',command=serialToggle)
+    SerialButton = Button(mainframe,text='Serial Forwarder',command=serialToggle)
     SerialButton.pack(side = LEFT)
     Button(mainframe,text='Generate Url',command=genUrl).pack(side = LEFT)
     root.mainloop()

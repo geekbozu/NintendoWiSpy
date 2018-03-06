@@ -12,9 +12,28 @@ A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used f
 
 ## Python Interface
 Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.
-
+##### Serial Baudrate:
+- Baud Rate for connected serial device.
+##### HTTPSERVER port:
+- Port to host the http server on.
+##### WebSocket Host:
+- Host of the websocket server.
+##### Display Socket Port:
+- Port that the display applet listens on for controller information.
+##### Serial Port: 
+- Available Serial Devices
+##### Theme
+- Available Themes.
+##### httpserver button:
+- Starts a http server to serve the display applet.
+##### Serial Forwarder:
+- Starts a serial forwarder based off selected comport, Forwards serial packets to display applet.
+##### Generate Url:
+- Copies Display applet url to your clip board
 ## THEMES
-NintendoSpy Web Edition Supports themes in a relatively simple JSON format
+NintendoSpy Web Edition Supports themes in a relatively simple JSON format  
+Themes are located in theme\  
+See included themes for fully functional examples
 ```
 {
   "controllerType": "GCN",
@@ -62,6 +81,7 @@ NintendoSpy Web Edition Supports themes in a relatively simple JSON format
 ```
 ### Theme Objects:  
 #### Root:
+Stores global information for the theme.
 - controllerType: GCN | N64  
 - Theme: Theme Name
 - Author: Author
@@ -69,6 +89,7 @@ NintendoSpy Web Edition Supports themes in a relatively simple JSON format
 - height: height of theme
 
 #### button:
+Buttons when pressed show the image file.
 ##### Available Buttons GCN
 - A B X Y L R START Z  
 
@@ -81,7 +102,9 @@ NintendoSpy Web Edition Supports themes in a relatively simple JSON format
 - file: Image file name
 - width: Width to scale image to (optional)
 - height: height to scale image to (optional)
+
 #### stick:
+Shows a image based off of the Stick Location.
 ##### Available stick GCN:
 - joyStick cStick  
 
@@ -102,6 +125,7 @@ NintendoSpy Web Edition Supports themes in a relatively simple JSON format
 - xreverse: Reverse X axis
 - yreverse: Reverse Y Axis
 #### analog:
+Shows an image starting from "direction" based on Analog position
 ##### Available analog GCN:
 - LTrig rTrig
 ##### Available analog N64
@@ -115,6 +139,7 @@ NintendoSpy Web Edition Supports themes in a relatively simple JSON format
 - y: Y Coord
 - direction: Direction to sweep image
 #### static:
+Displays a static image.
 ##### arguments:
 - x: X Coordinate
 - y: Y Coordinate
