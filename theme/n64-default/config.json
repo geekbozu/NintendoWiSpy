@@ -107,8 +107,8 @@
   }, 
   "stick": {
     "joyStick": {
-        "xname": "joyX",
-        "yname": "joyY",
+        "xname": "joyStickX",
+        "yname": "joyStickY",
         "file": "stick.png",
         "x": 81,
         "y": 85,

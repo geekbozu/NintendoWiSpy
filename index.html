@@ -163,10 +163,10 @@
                 ret.button.R = Boolean(~~data[10]);
                 //Todo analog shennangins 
                 
-                ret.analog.joyX = (getMultiByte(data,16)-128)/128;
-                ret.analog.joyY = (getMultiByte(data,16+8)-128)/128;
-                ret.analog.cstickX = (getMultiByte(data,16+16)-128)/128;
-                ret.analog.cstickY = (getMultiByte(data,16+24)-128)/128;
+                ret.analog.joyStickX = (getMultiByte(data,16)-128)/128;
+                ret.analog.joyStickY = (getMultiByte(data,16+8)-128)/128;
+                ret.analog.cStickX = (getMultiByte(data,16+16)-128)/128;
+                ret.analog.cStickY = (getMultiByte(data,16+24)-128)/128;
                 ret.analog.lTrig = getMultiByte(data,16+32)/256;
                 ret.analog.rTrig = getMultiByte(data,16+40)/256;
                 
@@ -188,14 +188,14 @@
                 ret.button.Cleft = Boolean(~~data[14]);
                 ret.button.Cright = Boolean(~~data[15]);
                 
-                ret.analog.joyX = (getMultiByte(data,16));
-                ret.analog.joyY = (getMultiByte(data,16+8));
-                if (ret.analog.joyX > 127)
-                    ret.analog.joyX -= 256;
-                if (ret.analog.joyY > 127)
-                    ret.analog.joyY -= 256;
-                ret.analog.joyX /= 128;
-                ret.analog.joyY /= 128;
+                ret.analog.joyStickX = (getMultiByte(data,16));
+                ret.analog.joyStickY = (getMultiByte(data,16+8));
+                if (ret.analog.joyStickX > 127)
+                    ret.analog.joyStickX -= 256;
+                if (ret.analog.joyStickY > 127)
+                    ret.analog.joyStickY -= 256;
+                ret.analog.joyStickX /= 128;
+                ret.analog.joyStickY /= 128;
                 break;
             default:
                 console.log("No Controller type");

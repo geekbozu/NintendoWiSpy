@@ -217,8 +217,9 @@ void setup()
    Serial.println(WiFi.localIP());
    webSocket.begin();
    webSocket.onEvent(webSocketEvent);
-   ArduinoOTA.begin();
    ArduinoOTA.setHostname("NintendoSpy");
+   ArduinoOTA.begin();
+  
    pinMode(N64_PIN,INPUT);
    pinMode(N64_PIN,INPUT);
    pinMode(4,INPUT);
