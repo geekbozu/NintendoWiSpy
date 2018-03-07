@@ -53,7 +53,7 @@ char use_ssid[32] = "";
 char use_password[32] = "";
 
 #define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
-
+#define HEARTBEATMSG "--heartbeat--"
 // Declare some space to store the bits we read from a controller.
 unsigned char rawData[ 128 ];
 char rawData2[ 128 ];
@@ -63,6 +63,7 @@ bool use_serial = false;
 unsigned char GC_PREFIX_STRING[25] = {0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1};
 unsigned char N64_PREFIX_STRING[9] = {0,0,0,0,0,0,0,1,1};
 
+unsigned long heartbeatMillis;
 char serial_command_buffer_[128];
 SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\r\n", " ");
 
@@ -205,7 +206,7 @@ void setup()
    serial_commands_.SetDefaultHandler(cmd_unrecognized);
    serial_commands_.AddCommand(&cmd_wifi_read_);
    serial_commands_.AddCommand(&cmd_wifi_write_);
-    serial_commands_.AddCommand(&cmd_tog_ser_);
+   serial_commands_.AddCommand(&cmd_tog_ser_);
    Serial.println("Connecting");
    loadCredentials();
    WiFiMulti.addAP(use_ssid, use_password);
@@ -224,7 +225,7 @@ void setup()
    pinMode(N64_PIN,INPUT);
    pinMode(4,INPUT);
    attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
-    
+   heartbeatMillis = millis();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -401,4 +402,9 @@ void loop()
     webSocket.loop();                           // constantly check for websocket events
     ArduinoOTA.handle();                        //and updates.
     serial_commands_.ReadSerial();
+    if(millis()- heartbeatMillis > 4000){
+      Serial.println("SENDING HEARTBEAT");
+      webSocket.broadcastTXT(HEARTBEATMSG);
+      heartbeatMillis = millis();
+    }
 }
