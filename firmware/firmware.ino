@@ -14,11 +14,10 @@
 
 #define MODEPIN_SNES 0
 #define MODEPIN_N64  1
-#define MODEPIN_GC   4
-
+#define MODEPIN_GC   13
 #define N64_PIN        5
-#define N64_PREFIX     9
-#define N64_BITCOUNT  33
+#define N64_PREFIX     8
+#define N64_BITCOUNT  32
 
 #define SNES_LATCH      3
 #define SNES_DATA       4
@@ -27,7 +26,7 @@
 #define NES_BITCOUNT    8
 
 #define GC_PIN        5
-#define GC_PREFIX    25
+#define GC_PREFIX    24
 #define GC_BITCOUNT  64
 
 #define ZERO  '0'  // Use a byte value of 0x00 to represent a bit with value 0.
@@ -39,6 +38,7 @@
 // NintendoSpy Firmware for Arduino
 // v1.0.1
 // Written by jaburns
+// Heavily modified for ESP8266 by Geekboy1011
 
 
 // ---------- Uncomment one of these options to select operation mode --------------
@@ -57,21 +57,21 @@ char use_password[32] = "";
 // Declare some space to store the bits we read from a controller.
 unsigned char rawData[ 128 ];
 char rawData2[ 128 ];
-unsigned char defined_bits;
+volatile unsigned char defined_bits=1;
 bool trans_pending = false;
 bool use_serial = false;
-unsigned char GC_PREFIX_STRING[25] = {0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1};
-unsigned char N64_PREFIX_STRING[9] = {0,0,0,0,0,0,0,1,1};
+unsigned char GC_PREFIX_STRING[24] = {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1};
+unsigned char N64_PREFIX_STRING[8] = {0,0,0,0,0,0,1,1};
 
 unsigned long heartbeatMillis;
-char serial_command_buffer_[128];
-SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\r\n", " ");
+char serial_command_buffer_[256];
+SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\n", " ");
 
 ESP8266WiFiMulti WiFiMulti;
 WebSocketsServer webSocket = WebSocketsServer(18881);
 
 
-//This is the default handler, and gets called when no other command matches. 
+//This is the default handler, and gets called when no other command matches.
 void cmd_unrecognized(SerialCommands* sender, const char* cmd)
 {
   sender->GetSerial()->print("Unrecognized command [");
@@ -79,8 +79,9 @@ void cmd_unrecognized(SerialCommands* sender, const char* cmd)
   sender->GetSerial()->println("]");
 }
 void cmd_rwifi(SerialCommands* sender){
-    sender->GetSerial()->println(use_password);
+  loadCredentials();
   sender->GetSerial()->println(use_ssid);
+  sender->GetSerial()->println(use_password);
 }
 void cmd_wifi(SerialCommands* sender)
 {
@@ -91,8 +92,8 @@ void cmd_wifi(SerialCommands* sender)
     sender->GetSerial()->println("ERROR SSID");
     return;
   }
-  
-  
+
+
   if (password == NULL)
   {
     sender->GetSerial()->println("ERROR PASS");
@@ -109,7 +110,7 @@ void cmd_tserial(SerialCommands* sender){
      return;
   }
   if (s[0] == '0'){
-    use_serial=false;  
+    use_serial=false;
     sender->GetSerial()->println("WEB SOCKET MODE");
     return;
   }
@@ -117,7 +118,7 @@ void cmd_tserial(SerialCommands* sender){
     use_serial=true;
     sender->GetSerial()->println("SERIAL MODE");
   }
- 
+
 }
 SerialCommand cmd_wifi_write_("WW", cmd_wifi);
 SerialCommand cmd_wifi_read_("RW", cmd_rwifi);
@@ -133,7 +134,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             {
                 IPAddress ip = webSocket.remoteIP(num);
                 Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
-        
+
         // send message to client
         webSocket.sendTXT(num, "Connected");
             }
@@ -166,43 +167,45 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 //     defined_bits = Number of bits to read from the line.
 void gc_n64_isr()
 {   //Takes ~2us to enter
-  //if (trans_pending) return;  //need to get speed count
-  //trans_pending = false;
+  GPOS = (1 << 14);
   unsigned char *rawDataPtr = rawData;
-  *rawDataPtr = PIN_READ(5);
-  detachInterrupt(digitalPinToInterrupt(5));  //remove interrupt to not have a second one queue 
-  ++rawDataPtr;
- 
-  int bits = defined_bits;
-  bits--;
-
+  GPOC = (1 << 14);
   do {
     // Wait for the line to go high then low.
     while( !PIN_READ(5) );
-    unsigned long sMicros = micros(); 
-    while( PIN_READ(5) ) { 
-      if ((micros() - sMicros) >= 4){  
-        memset(rawData,0,sizeof(rawData)); 
+    unsigned long sMicros = micros();
+    while( PIN_READ(5) ) {
+      if ((micros() - sMicros) >= 4){
+        memset(rawData,0,sizeof(rawData));
         attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
         return;
         }
     }
     // Wait ~2us between line reads
+    GPOS = ( 1 << 14);
     delayMicroseconds(1);
     // Read a bit from the line and store as a byte in "rawData"
     *rawDataPtr = PIN_READ(5);
+    GPOC = ( 1 << 14);
     ++rawDataPtr;
-  } 
-  while(--bits != 0 );
+  }
+  while(--defined_bits != 0 );
+  GPOS =( 1 << 14);
   trans_pending = true;
+  detachInterrupt(digitalPinToInterrupt(5));  //remove interrupt to not have a requeue before send
+  GPIEC = (1 << 5);  // Clear interrupt flags because we most defineitily triggered one during this interrupt
+  GPOC = (1 << 14);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // General initialization, just sets all pins to input and starts serial communication.
 void setup()
 {
+
+   pinMode(N64_PIN,INPUT);
+   pinMode(MODEPIN_GC,INPUT);
+   pinMode(14,OUTPUT);
    Serial.begin( 115200 );
-   
    serial_commands_.SetDefaultHandler(cmd_unrecognized);
    serial_commands_.AddCommand(&cmd_wifi_read_);
    serial_commands_.AddCommand(&cmd_wifi_write_);
@@ -220,10 +223,8 @@ void setup()
    webSocket.onEvent(webSocketEvent);
    ArduinoOTA.setHostname("NintendoSpy");
    ArduinoOTA.begin();
-  
-   pinMode(N64_PIN,INPUT);
-   pinMode(N64_PIN,INPUT);
-   pinMode(4,INPUT);
+
+
    attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
    heartbeatMillis = millis();
 }
@@ -260,8 +261,7 @@ inline void sendRawData( unsigned char first, unsigned char count )
 // Update loop definitions for the various console modes.
 
 inline void loop_gc()
-{   
-    defined_bits = GC_PREFIX + GC_BITCOUNT;
+{
     if (trans_pending){
         if (memcmp(rawData,GC_PREFIX_STRING,sizeof(GC_PREFIX_STRING)) == 0){  //Check that we recieved a packet validly
                 for( unsigned char i = GC_PREFIX ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
@@ -274,16 +274,16 @@ inline void loop_gc()
               Serial.write(SPLIT);
             }
             else {
-              webSocket.broadcastTXT(rawData+GC_PREFIX,GC_BITCOUNT);  
+              webSocket.broadcastTXT(rawData+GC_PREFIX,GC_BITCOUNT);
             }
-            
+
         }
         else {
               for( unsigned char i = 0 ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
                     rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
                     //Serial.write(rawData[i]);
                }
-               Serial.print("Bad Frame: "); Serial.printf("%s",rawData); Serial.println(' ');
+               //Serial.print("Bad GCN Frame: "); Serial.printf("%s",rawData); Serial.println(' ');
             }
             memset(rawData,0,sizeof(rawData)); //Clear frame incase we got bad frame
             trans_pending = false;
@@ -293,13 +293,13 @@ inline void loop_gc()
                 startmillis = micros();
               }
             }
+            defined_bits = GC_PREFIX + GC_BITCOUNT;
             attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
     }
 }
 
 inline void loop_N64()
 {
-    defined_bits = N64_PREFIX + N64_BITCOUNT;
     if (trans_pending){
         if (memcmp(rawData,N64_PREFIX_STRING,sizeof(N64_PREFIX_STRING)) == 0){  //Check that we recieved a packet validly
            //Serial.print("Good Frame: ");
@@ -310,7 +310,7 @@ inline void loop_N64()
                     }
                 }
                 if (use_serial){
-                  Serial.write(SPLIT);    
+                  Serial.write(SPLIT);
                 }
                 else {
                   webSocket.broadcastTXT(rawData+N64_PREFIX,N64_BITCOUNT);
@@ -321,7 +321,7 @@ inline void loop_N64()
                     rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
                     //Serial.write(rawData[i]);
                }
-               Serial.print("Bad Frame: "); Serial.printf("%s",rawData); Serial.println(' ');
+               Serial.print("Bad N64 Frame: "); Serial.printf("%s",rawData); Serial.println(' ');
             }
             memset(rawData,0,sizeof(rawData)); //Clear frame incase we got bad frame
             trans_pending = false;
@@ -332,6 +332,7 @@ inline void loop_N64()
               }
             }
             attachInterrupt(digitalPinToInterrupt(5),gc_n64_isr,FALLING);
+            defined_bits = N64_PREFIX + N64_BITCOUNT;
     }
 }
 
@@ -363,9 +364,7 @@ void loadCredentials() {
     use_ssid[0] = 0;
     use_password[0] = 0;
   }
-  Serial.println("Recovered credentials:");
-  Serial.println(use_ssid);
-  Serial.println(strlen(use_password)>0?"********":"<no password>");
+
 }
 
 /** Store WLAN credentials to EEPROM */
@@ -384,7 +383,7 @@ void saveCredentials() {
 void loop()
 {
 #ifdef MODE_GC
-    loop_gc();   
+    loop_gc();
 #elif defined MODE_N64
     loop_N64();
 #elif defined MODE_SNES
@@ -403,7 +402,7 @@ void loop()
     ArduinoOTA.handle();                        //and updates.
     serial_commands_.ReadSerial();
     if(millis()- heartbeatMillis > 4000){
-      Serial.println("SENDING HEARTBEAT");
+      //Serial.println("SENDING HEARTBEAT");
       webSocket.broadcastTXT(HEARTBEATMSG);
       heartbeatMillis = millis();
     }
