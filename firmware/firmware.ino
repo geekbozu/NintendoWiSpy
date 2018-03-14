@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <EEPROM.h>
-
+#include <ESPAsyncTCP.h>
 #include <SerialCommands.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <ArduinoOTA.h>
-
+#include <ESP8266mDNS.h>
 #define PIN_READ( pin )  GPIP(pin)
 #define PINC_READ( pin ) digitalRead(pin)
 
@@ -53,7 +53,7 @@ char use_ssid[32] = "";
 char use_password[32] = "";
 
 #define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
-#define HEARTBEATMSG "--heartbeat--"
+#define HEARTBEATMSG "pong"
 // Declare some space to store the bits we read from a controller.
 unsigned char rawData[ 128 ];
 char rawData2[ 128 ];
@@ -141,7 +141,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             break;
         case WStype_TEXT:
             Serial.printf("[%u] get Text: %s\n", num, payload);
-
+            if (memcmp(payload,"ping",4) == 0){
+                webSocket.sendTXT(num,HEARTBEATMSG);
+            }
             // send message to client
             // webSocket.sendTXT(num, "message here");
 
@@ -193,7 +195,7 @@ void gc_n64_isr()
   GPOS =( 1 << 14);
   trans_pending = true;
   detachInterrupt(digitalPinToInterrupt(5));  //remove interrupt to not have a requeue before send
-  GPIEC = (1 << 5);  // Clear interrupt flags because we most defineitily triggered one during this interrupt
+  //GPIEC = (1 << 5);  // Clear interrupt flags because we most defineitily triggered one during this interrupt
   GPOC = (1 << 14);
 }
 
@@ -211,6 +213,8 @@ void setup()
    serial_commands_.AddCommand(&cmd_wifi_write_);
    serial_commands_.AddCommand(&cmd_tog_ser_);
    Serial.println("Connecting");
+   WiFi.hostname("NintendoSpy");
+   MDNS.addService("http","tcp",18881);
    loadCredentials();
    WiFiMulti.addAP(use_ssid, use_password);
 
@@ -219,8 +223,8 @@ void setup()
    }
    Serial.print("Connected: ");
    Serial.println(WiFi.localIP());
-   webSocket.begin();
    webSocket.onEvent(webSocketEvent);
+   webSocket.begin();
    ArduinoOTA.setHostname("NintendoSpy");
    ArduinoOTA.begin();
 
@@ -398,12 +402,16 @@ void loop()
     }
 #endif
 
-    webSocket.loop();                           // constantly check for websocket events
+    //webSocket.loop();                           // constantly check for websocket events
     ArduinoOTA.handle();                        //and updates.
     serial_commands_.ReadSerial();
-    if(millis()- heartbeatMillis > 4000){
+    if(millis()- heartbeatMillis > 10000){
       //Serial.println("SENDING HEARTBEAT");
-      webSocket.broadcastTXT(HEARTBEATMSG);
+      if (!webSocket.sendPing(0)){
+        Serial.println("Disconecting, Missed ping");
+        webSocket.disconnect();
+      }
       heartbeatMillis = millis();
     }
+
 }

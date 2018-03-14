@@ -3,7 +3,7 @@ window.onload = function(){
         config = JSON.parse(getJSON(theme + 'config.json')),
         canvas = document.getElementById('myCanvas'),
         ctx = canvas.getContext('2d'),
-        heartbeatMsg = '--heartbeat--',
+        heartbeatMsg = 'pong',
         heartbeatInterval = null,
         missedHeartbeats = 0,
         i,
@@ -26,10 +26,10 @@ window.onload = function(){
             heartbeatInterval = setInterval(function(){
                 try{
                     missedHeartbeats++;
-                    if(missedHeartbeats >= 3){
+                    if(missedHeartbeats >= 4){
                         throw new Error('Too many missed heartbeats.');
                     }
-                    socket.send(heartbeatMsg);
+                    socket.send('ping');
                 } catch(e){
                     clearInterval(heartbeatInterval);
                     heartbeatInterval = null;
