@@ -8,7 +8,7 @@ window.onload = function(){
         missedHeartbeats = 0,
         i,
         RSSI = null,
-        socket = new ReconnectingWebsocket('ws://' + getAllUrlParams().websocketserver + ':' + getAllUrlParams().websockport);
+        socket = new ReconnectingWebsocket('ws://' + getAllUrlParams().websocketserver + ':' + getAllUrlParams().websockport, 'arduino');
 
     if(config.width){
         canvas.width = config.width;
