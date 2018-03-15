@@ -7,6 +7,7 @@ window.onload = function(){
         heartbeatInterval = null,
         missedHeartbeats = 0,
         i,
+        RSSI = null,
         socket = new ReconnectingWebsocket('ws://' + getAllUrlParams().websocketserver + ':' + getAllUrlParams().websockport);
 
     if(config.width){
@@ -73,6 +74,15 @@ window.onload = function(){
 
     socket.onmessage = function(event){
         // console.log('Recieved: ' + event.data);
+        var controlsObj = extractControls(event.data),
+            i,
+            x,
+            y,
+            sy,
+            sx,
+            sheight,
+            swidth;
+
         if(event.data == 'Connected'){
             return;
         }
@@ -83,14 +93,10 @@ window.onload = function(){
             return;
         }
 
-        var controlsObj = extractControls(event.data),
-            i,
-            x,
-            y,
-            sy,
-            sx,
-            sheight,
-            swidth;
+        if(event.data.slice(0, 4) === 'RSSI'){
+            RSSI = event.data.slice(5);
+            return;
+        }
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -160,6 +166,13 @@ window.onload = function(){
                 break;
             default:
                 console.log('No Controller type');
+        }
+        if(RSSI != null && config.WiFiStatus){
+            ctx.font = config.WiFiStatus.height + ' Calibri';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
+            ctx.fillText('RSSI:'+RSSI+'dBm', config.WiFiStatus.x,config.WiFiStatus.y);
         }
     };
     function extractControls(data){

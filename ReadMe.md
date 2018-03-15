@@ -1,6 +1,6 @@
 # NintendoSpy Web Edition
 
-A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used for showing/recording inputs during livestreams/gameplay recording sessions. 
+A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used for showing/recording inputs during livestreams/gameplay recording sessions.
 
 # Documentation
 
@@ -11,10 +11,10 @@ A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used f
 - Custom Themes in a JSON format
 ## Requirements
 - Python2.7
-- PySerial 
+- PySerial
 - [python-websocket-server](https://github.com/Pithikos/python-websocket-server)
 ## Python Interface
-Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.  
+Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.
 ![](https://i.imgur.com/SqLejSL.png)
 ##### Serial Baudrate:
 - Baud Rate for connected serial device.
@@ -24,7 +24,7 @@ Currently the python2.7 interface is built on top of TKinter. It is a means of s
 - Host of the websocket server.
 ##### Display Socket Port:
 - Port that the display applet listens on for controller information.
-##### Serial Port: 
+##### Serial Port:
 - Available Serial Devices
 ##### Theme
 - Available Themes.
@@ -35,8 +35,8 @@ Currently the python2.7 interface is built on top of TKinter. It is a means of s
 ##### Generate Url:
 - Copies Display applet url to your clip board
 ## THEMES
-NintendoSpy Web Edition Supports themes in a relatively simple JSON format  
-Themes are located in theme\  
+NintendoSpy Web Edition Supports themes in a relatively simple JSON format
+Themes are located in theme\
 See included themes for fully functional examples
 ```
 {
@@ -45,6 +45,11 @@ See included themes for fully functional examples
   "author": "Geekboy1011",          Theme Author
   "width": 200,                     Width of theme
   "height": 50,                     Height of Theme
+  "WiFiStatus": {                   Optional Struct
+    "height": "10px",               WiFi status message height
+    "x": 0,                         X
+    "y": 0                          Y
+  },
   "button": {                       Button Object
     "A": {                          Button
       "x": 35,                      X Coordinate
@@ -53,7 +58,7 @@ See included themes for fully functional examples
       "width": 10,                  Scale image to width (Optional)
       "height": 10                  Scale image to height (Optional)
     }
-  }, 
+  },
   "stick": {                        Stick Object
     "joyStick": {                   Stick name
         "xname": "joyX",            X Axis
@@ -61,7 +66,7 @@ See included themes for fully functional examples
         "file": "Stick.png",        Image File Name
         "x": 14,                    X Coordinate
         "y": 29,                    Y Coordinate
-        "xrange": 16,               Range in pixels to move image over axis 
+        "xrange": 16,               Range in pixels to move image over axis
         "yrange": 16,               Range in pixels to move image over axis
         "xreverse": false,          Reverse X axis
         "yreverse": false           Reverse Y axis
@@ -74,8 +79,8 @@ See included themes for fully functional examples
         "x": 71,                    X Coordinate
         "y": 21,                    Y Coordinate
         "direction": "left"         Image Render Direction
-    }                               
-  },                                
+    }
+  },
   "static": {                       Static Object
     "background": {                 Name
         "x": 0,                     X coordinate
@@ -85,27 +90,33 @@ See included themes for fully functional examples
   }
 }
 ```
-## Theme Objects:  
+## Theme Objects:
 ### Root:
 Stores global information for the theme.
-- controllerType: GCN | N64  
+- controllerType: GCN | N64
 - Theme: Theme Name
 - Author: Author
 - width: Width of theme
 - height: height of theme
 
+### WiFiStatus:
+Optional
+If present has the client display current wifi signal strength recieved from NintedoWiSpy
+- height: Font height, Can be any browser unit
+- x: X coordinate
+- y: y coordinate of bottom of text
 ### button:
 Buttons when pressed show the image file.
 ##### Available Buttons GCN
-- A B X Y L R START Z  
+- A B X Y L R START Z
 
 ##### Available Buttons N64
-- A B L R START up down left right Cup Cleft Cright Cdown
+- A B L R Z START up down left right Cup Cleft Cright Cdown
 
 ### stick:
 Shows a image based off of the Stick Location.
 ##### Available stick GCN:
-- joyStick cStick  
+- joyStick cStick
 
 ##### Available stick N64:
 - joyStick
@@ -125,4 +136,4 @@ Shows an image starting from "direction" based on Analog position
 Displays a static image.
 
 ### Hardware
-TO DOCUMENT 
+TO DOCUMENT

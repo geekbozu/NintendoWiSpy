@@ -5,6 +5,11 @@
   "cite": false,
   "width": 200,
   "height": 50,
+  "WiFiStatus": {
+    "height": "10px",
+    "x": 0,
+    "y": 0
+  },
   "button": {
     "A": {
       "x": 35,
@@ -46,7 +51,7 @@
       "y": 21,
       "file": "Start.png"
     }
-  }, 
+  },
   "stick": {
     "joyStick": {
         "xname": "joyStickX",
