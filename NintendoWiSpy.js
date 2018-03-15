@@ -229,7 +229,7 @@ window.onload = function(){
         var button = {},
             analog = {};
         if(config.controllerType in controls){
-            constrols[config.controllerType](data, button, analog);
+            controls[config.controllerType](data, button, analog);
         }else{
             console.log('No Controller type');
         }
