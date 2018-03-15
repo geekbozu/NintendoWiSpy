@@ -163,6 +163,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 //     defined_bits = Number of bits to read from the line.
 void gc_n64_isr() {
     //Takes ~2us to enter
+    ESP.wdtFeed()  //This may take some time. Feed the dog;
     GPOS = (1 << 14);
     unsigned char *rawDataPtr = rawData;
     GPOC = (1 << 14);
