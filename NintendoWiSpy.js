@@ -1,4 +1,4 @@
-window.onload = function(){
+window.onload = async () => {
     const params = getAllUrlParams(),
         theme = 'theme\\' + params.theme + '\\',
         config = await getJSON(theme + 'config.json'),
