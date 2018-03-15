@@ -158,7 +158,7 @@
                 swidth = config.analog[i].img.width;
                 return [x, y, sy, sx, sheight, swidth];
             },
-            down: (controlsObj x, y, sy, sx, sheight, swidth) => {
+            down: (controlsObj, x, y, sy, sx, sheight, swidth) => {
                 sx = 0;
                 sy = 0;
                 swidth = config.analog[i].img.width;
@@ -174,7 +174,7 @@
                 x -= swidth;
                 return [x, y, sy, sx, sheight, swidth];
             },
-            right (controlsObj, x, y, sy, sx, sheight, swidth) => {
+            right: (controlsObj, x, y, sy, sx, sheight, swidth) => {
                 sx = 0;
                 sy = 0;
                 sheight = config.analog[i].img.height;
