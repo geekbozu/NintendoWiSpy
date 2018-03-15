@@ -82,7 +82,7 @@
             canvas = document.getElementById('myCanvas'),
             ctx = canvas.getContext('2d'),
             heartbeatMsg = 'pong',
-            socket = new ReconnectingWebsocket('ws://' + params.websocketserver + ':' + params.websockport);
+            socket = new ReconnectingWebsocket('ws://' + params.websocketserver + ':' + params.websockport, 'arduino');
         var heartbeatInterval = null,
             missedHeartbeats = 0,
             i,
