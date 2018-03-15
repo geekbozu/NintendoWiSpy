@@ -1,5 +1,81 @@
 (function(){
-    async function onload(){
+    async function getJSON(url){
+        const res = await fetch(url);
+        return await res.json();
+    }
+    function heartbeat(){
+        this.isAlive = true;
+    }
+    function getMultiByte(data, offset){
+        var val, j = 0;
+        for(j = 0; j < 8; ++j){
+            if(data[j + offset] == '1'){
+                val |= 1 << (7 - j);
+            }
+        }
+        return val;
+    }
+    // Graciously stolen from sitepoint
+    // https://www.sitepoint.com/get-url-parameters-with-javascript/
+    function getAllUrlParams(url){
+        // get query string from url (optional) or window
+        var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
+
+        // we'll store the parameters here
+        var obj = {};
+
+        // if query string exists
+        if(queryString){
+            // stuff after # is not part of query string, so get rid of it
+            queryString = queryString.split('#')[0];
+
+            // split our query string into its component parts
+            var arr = queryString.split('&');
+
+            for(var i = 0; i < arr.length; i++){
+                // separate the keys and the values
+                var a = arr[i].split('=');
+
+                // in case params look like: list[]=thing1&list[]=thing2
+                var paramNum;
+                var paramName = a[0].replace(/\[\d*\]/, function(v){
+                    paramNum = v.slice(1, -1);
+                    return '';
+                });
+
+                // set parameter value (use 'true' if empty)
+                var paramValue = typeof (a[1]) === 'undefined' ? true : a[1];
+
+                // (optional) keep case consistent
+                paramName = paramName.toLowerCase();
+                paramValue = paramValue.toLowerCase();
+
+                // if parameter name already exists
+                if(obj[paramName]){
+                    // convert value to array (if still string)
+                    if(typeof obj[paramName] === 'string'){
+                        obj[paramName] = [obj[paramName]];
+                    }
+                    // if no array index number specified...
+                    if(typeof paramNum === 'undefined'){
+                        // put the value on the end of the array
+                        obj[paramName].push(paramValue);
+                    }
+                    // if array index number specified...
+                    else{
+                    // put the value at that index number
+                        obj[paramName][paramNum] = paramValue;
+                    }
+                }
+                // if param name doesn't exist yet, set it
+                else{
+                    obj[paramName] = paramValue;
+                }
+            }
+        }
+        return obj;
+    }
+    window.onload = async () => {
         const params = getAllUrlParams(),
             theme = 'theme\\' + params.theme + '\\',
             config = await getJSON(theme + 'config.json'),
@@ -236,84 +312,5 @@
             }
             return { button, analog };
         }
-    }
-    // Graciously stolen from sitepoint
-    // https://www.sitepoint.com/get-url-parameters-with-javascript/
-    function getAllUrlParams(url){
-        // get query string from url (optional) or window
-        var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
-
-        // we'll store the parameters here
-        var obj = {};
-
-        // if query string exists
-        if(queryString){
-            // stuff after # is not part of query string, so get rid of it
-            queryString = queryString.split('#')[0];
-
-            // split our query string into its component parts
-            var arr = queryString.split('&');
-
-            for(var i = 0; i < arr.length; i++){
-                // separate the keys and the values
-                var a = arr[i].split('=');
-
-                // in case params look like: list[]=thing1&list[]=thing2
-                var paramNum;
-                var paramName = a[0].replace(/\[\d*\]/, function(v){
-                    paramNum = v.slice(1, -1);
-                    return '';
-                });
-
-                // set parameter value (use 'true' if empty)
-                var paramValue = typeof (a[1]) === 'undefined' ? true : a[1];
-
-                // (optional) keep case consistent
-                paramName = paramName.toLowerCase();
-                paramValue = paramValue.toLowerCase();
-
-                // if parameter name already exists
-                if(obj[paramName]){
-                    // convert value to array (if still string)
-                    if(typeof obj[paramName] === 'string'){
-                        obj[paramName] = [obj[paramName]];
-                    }
-                    // if no array index number specified...
-                    if(typeof paramNum === 'undefined'){
-                        // put the value on the end of the array
-                        obj[paramName].push(paramValue);
-                    }
-                    // if array index number specified...
-                    else{
-                    // put the value at that index number
-                        obj[paramName][paramNum] = paramValue;
-                    }
-                }
-                // if param name doesn't exist yet, set it
-                else{
-                    obj[paramName] = paramValue;
-                }
-            }
-        }
-        return obj;
-    }
-    async function getJSON(url){
-        const res = await fetch(url);
-        return await res.json();
-    }
-    function heartbeat(){
-        this.isAlive = true;
-    }
-    function getMultiByte(data, offset){
-        var val, j = 0;
-        for(j = 0; j < 8; ++j){
-            if(data[j + offset] == '1'){
-                val |= 1 << (7 - j);
-            }
-        }
-        return val;
-    }
-    window.onload = () => {
-        onload();
     };
 })();
