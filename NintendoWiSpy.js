@@ -150,35 +150,35 @@
             }
         }
         const GCN_N64_Direction = {
-            up: (controlsObj, x, y, sy, sx, sheight, swidth) => {
+            up: (controlsObj, controlConf, x, y, sy, sx, sheight, swidth) => {
                 sx = 0;
-                sy = config.analog[i].img.height - sheight;
+                sy = controlConf.img.height - sheight;
                 y += sy;
-                sheight = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.height;
-                swidth = config.analog[i].img.width;
+                sheight = controlsObj.analog[controlConf.axis] * controlConf.img.height;
+                swidth = controlConf.img.width;
                 return [x, y, sy, sx, sheight, swidth];
             },
-            down: (controlsObj, x, y, sy, sx, sheight, swidth) => {
+            down: (controlsObj, controlConf, x, y, sy, sx, sheight, swidth) => {
                 sx = 0;
                 sy = 0;
-                swidth = config.analog[i].img.width;
-                sheight = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.height;
+                swidth = controlConf.img.width;
+                sheight = controlsObj.analog[controlConf.axis] * controlConf.img.height;
                 return [x, y, sy, sx, sheight, swidth];
             },
-            left: (controlsObj, x, y, sy, sx, sheight, swidth) => {
+            left: (controlsObj, controlConf, x, y, sy, sx, sheight, swidth) => {
                 sy = 0;
-                swidth = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.width;
-                sheight = config.analog[i].img.height;
-                sx = config.analog[i].img.width - swidth;
-                x += config.analog[i].img.width;
+                swidth = controlsObj.analog[controlConf.axis] * controlConf.img.width;
+                sheight = controlConf.img.height;
+                sx = controlConf.img.width - swidth;
+                x += controlConf.img.width;
                 x -= swidth;
                 return [x, y, sy, sx, sheight, swidth];
             },
-            right: (controlsObj, x, y, sy, sx, sheight, swidth) => {
+            right: (controlsObj, controlConf, x, y, sy, sx, sheight, swidth) => {
                 sx = 0;
                 sy = 0;
-                sheight = config.analog[i].img.height;
-                swidth = controlsObj.analog[config.analog[i].axis] * config.analog[i].img.width;
+                sheight = controlConf.img.height;
+                swidth = controlsObj.analog[controlConf.axis] * controlConf.img.width;
                 return [x, y, sy, sx, sheight, swidth];
             }
         };
@@ -240,7 +240,7 @@
                     y = config.analog[i].y;// Location on screen
                     let direction = config.analog[i].direction;
                     if(direction in GCN_N64_Direction){
-                        [x, y, sy, sx, sheight, swidth] = GCN_N64_Direction[config.analog[i].direction](controlsObj, x, y, sy, sx, sheight, swidth);
+                        [x, y, sy, sx, sheight, swidth] = GCN_N64_Direction[config.analog[i].direction](controlsObj, config.analog[i], x, y, sy, sx, sheight, swidth);
                     }
                     ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
                 }
