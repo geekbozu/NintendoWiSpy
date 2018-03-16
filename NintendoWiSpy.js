@@ -15,6 +15,16 @@
         }
         return val;
     }
+    function drawStrokeText(ctx, text, x, y){
+        ctx.font = 'Calibri';
+        ctx.miterLimit=2;
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 4;
+        ctx.strokeText(text, x, y, x * 2);
+        ctx.fillStyle = 'white';
+        ctx.fillText(text, x, y, x * 2);
+    }
     // Graciously stolen from sitepoint
     // https://www.sitepoint.com/get-url-parameters-with-javascript/
     function getAllUrlParams(url){
@@ -95,9 +105,7 @@
             canvas.height = config.height;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = "center";
-        ctx.fillText('Waiting for connection', canvas.width / 2, canvas.height / 2);
-
+        drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2);
         socket.onopen = (event) => {
             console.log('Connected to: ' + event.currentTarget.url);
             if(heartbeatInterval === null){
@@ -109,12 +117,11 @@
                             throw new Error('Too many missed heartbeats.');
                         }
                         socket.send('ping');
-                    } catch(e){
+                    }catch(e){
                         clearInterval(heartbeatInterval);
                         heartbeatInterval = null;
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.textAlign = 'center';
-                        ctx.fillText('Waiting for connection', canvas.width/2, canvas.height/2);
+                        drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2);
                         console.warn('Closing connection. Reason: ' + e.message);
                         socket.close();
                     }
@@ -207,7 +214,7 @@
             for(i in config.static){
                 ctx.drawImage(config.static[i].img, config.static[i].x, config.static[i].y);
             }
-            if(config.controllerType == 'GCN' || config.controllerType == 'N64'){
+            if(config.controllerType === 'GCN' || config.controllerType === 'N64'){
                 let controlsObj = extractControls(event.data),
                     x,
                     y,
@@ -245,14 +252,14 @@
                     ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
                 }
             }else{
-                    console.log('No Controller type');
+                console.log('No Controller type');
             }
             if(RSSI != null && config.WiFiStatus){
                 ctx.font = config.WiFiStatus.height + ' Calibri';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
-                ctx.fillText('RSSI:'+RSSI+'dBm', config.WiFiStatus.x,config.WiFiStatus.y);
+                ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
             }
         };
         const controls = {
@@ -265,7 +272,6 @@
                 button.Z = !!~~data[11];
                 button.L = !!~~data[9];
                 button.R = !!~~data[10];
-                // Todo analog shennangins
 
                 analog.joyStickX = (getMultiByte(data, 16) - 128) / 128;
                 analog.joyStickY = (getMultiByte(data, 16 + 8) - 128) / 128;
@@ -310,7 +316,7 @@
             }else{
                 console.log('No Controller type');
             }
-            return { button, analog };
+            return {button, analog};
         }
     };
 })();
