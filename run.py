@@ -1,15 +1,18 @@
 import logging
 import threading,sys,os,webbrowser
 import serial,serial.tools.list_ports
-from SimpleHTTPServer import SimpleHTTPRequestHandler
-from BaseHTTPServer import HTTPServer
+import SimpleHTTPServer, BaseHTTPServer, SocketServer
 from websocket_server import WebsocketServer
 from Tkinter import *
 import ttk,tkMessageBox
 
+class ThreadingSimpleServer(SocketServer.ThreadingMixIn,BaseHTTPServer.HTTPServer):
+    pass
+
 httpServerRunning = False
 serialServerRunning = False
 ser = serial.Serial()
+
 def serialServerLoop():
     global serialServerRunning
     ser.open()
@@ -34,7 +37,7 @@ def httpToggle():
         os.chdir( sys.path[0] )
     else:
         HttpButton.configure(bg='#0F0')
-        httpserver = HTTPServer(('', HttpSpinBoxVar.get()), SimpleHTTPRequestHandler)
+        httpserver = ThreadingSimpleServer(('', HttpSpinBoxVar.get()), SimpleHTTPServer.SimpleHTTPRequestHandler)
         #os.chdir('theme\\' + themebox.get(themebox.curselection()))
         httpthread = threading.Thread(target = httpserver.serve_forever)
         httpthread.daemon = True
