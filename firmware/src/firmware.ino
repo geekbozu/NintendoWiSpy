@@ -9,8 +9,6 @@
 #define PIN_READ( pin )  GPIP(pin)
 #define PINC_READ( pin ) digitalRead(pin)
 
-
-
 #define MODEPIN_SNES 0
 #define MODEPIN_N64  1
 #define MODEPIN_GC   13
@@ -32,6 +30,8 @@
 #define ONE    '1'  // Use an ASCII one to represent a bit with value 1.  This makes Arduino debugging easier.
 #define SPLIT '\n'  // Use a new-line character to split up the controller state packets.
 
+#define HEARTBEATMSG "pong"
+#define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // NintendoSpy Firmware for Arduino
@@ -51,18 +51,19 @@
 char use_ssid[32] = "";
 char use_password[32] = "";
 
-#define WAIT_FALLING_EDGE( pin,timeoutus )  while( !PIN_READ(pin) ); unsigned long sMicros = micros(); while( PIN_READ(pin) ) { if ((micros() - sMicros) > timeoutus){  memset(rawData,0,128); return;}}
-#define HEARTBEATMSG "pong"
+//Controller packet headers MINUS the first bit
+const unsigned char GC_PREFIX_STRING[24] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+const unsigned char N64_PREFIX_STRING[8] = {0, 0, 0, 0, 0, 0, 1, 1};
+
 // Declare some space to store the bits we read from a controller.
-unsigned char rawData[ 128 ];
-char rawData2[ 128 ];
 volatile unsigned char defined_bits = 1;
+unsigned char rawData[ 128 ];
+
+// Runtime state variables
 bool trans_pending = false;
 bool use_serial = false;
-unsigned char GC_PREFIX_STRING[24] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-unsigned char N64_PREFIX_STRING[8] = {0, 0, 0, 0, 0, 0, 1, 1};
-
 unsigned long heartbeatMillis;
+
 char serial_command_buffer_[256];
 SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\n", " ");
 
@@ -75,11 +76,13 @@ void cmd_unrecognized(SerialCommands* sender, const char* cmd) {
     sender->GetSerial()->print(cmd);
     sender->GetSerial()->println("]");
 }
+
 void cmd_rwifi(SerialCommands* sender) {
     loadCredentials();
     sender->GetSerial()->println(use_ssid);
     sender->GetSerial()->println(use_password);
 }
+
 void cmd_wifi(SerialCommands* sender) {
     char* ssid = sender->Next();
     char* password = sender->Next();
@@ -97,6 +100,7 @@ void cmd_wifi(SerialCommands* sender) {
     strcpy ( use_ssid, ssid);
     saveCredentials();
 }
+
 void cmd_tserial(SerialCommands* sender) {
     char* s = sender->Next();
     if (s == NULL) {
@@ -118,6 +122,33 @@ SerialCommand cmd_wifi_write_("WW", cmd_wifi);
 SerialCommand cmd_wifi_read_("RW", cmd_rwifi);
 SerialCommand cmd_tog_ser_("TS", cmd_tserial);
 
+/* Load WLAN credentials from EEPROM */
+void loadCredentials() {
+    EEPROM.begin(512);
+    EEPROM.get(0, use_ssid);
+    EEPROM.get(0 + sizeof(use_ssid), use_password);
+    char ok[2 + 1];
+    EEPROM.get(0 + sizeof(use_ssid) + sizeof(use_password), ok);
+    EEPROM.end();
+    if (String(ok) != String("OK")) {
+        use_ssid[0] = 0;
+        use_password[0] = 0;
+    }
+
+}
+
+/** Store WLAN credentials to EEPROM */
+void saveCredentials() {
+    EEPROM.begin(512);
+    EEPROM.put(0, use_ssid);
+    EEPROM.put(0 + sizeof(use_ssid), use_password);
+    char ok[2 + 1] = "OK";
+    EEPROM.put(0 + sizeof(use_ssid) + sizeof(use_password), ok);
+    EEPROM.commit();
+    EEPROM.end();
+}
+
+/** WebSocketServer event handler */
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
     switch (type) {
@@ -159,11 +190,11 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 // ISR for spying GC and N64 controller commands
 // Performs a read cycle from one of Nintendo's one-wire interface based controllers.
 // This includes the N64 and the Gamecube.
-//     pin  = Pin index on Port D where the data wire is attached.
 //     defined_bits = Number of bits to read from the line.
+//     always reads from pin 5 for now
 void gc_n64_isr() {
     //Takes ~2us to enter
-    ESP.wdtFeed()  //This may take some time. Feed the dog;
+    ESP.wdtFeed();  //This may take some time. Feed the dog;
     GPOS = (1 << 14);
     unsigned char *rawDataPtr = rawData;
     GPOC = (1 << 14);
@@ -193,38 +224,8 @@ void gc_n64_isr() {
     GPOC = (1 << 14);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General initialization, just sets all pins to input and starts serial communication.
-void setup() {
-
-    pinMode(N64_PIN, INPUT);
-    pinMode(MODEPIN_GC, INPUT);
-    pinMode(14, OUTPUT);
-    Serial.begin( 921600 );
-    serial_commands_.SetDefaultHandler(cmd_unrecognized);
-    serial_commands_.AddCommand(&cmd_wifi_read_);
-    serial_commands_.AddCommand(&cmd_wifi_write_);
-    serial_commands_.AddCommand(&cmd_tog_ser_);
-    Serial.println("Connecting");
-    WiFi.hostname("NintendoSpy");
-    MDNS.addService("http", "tcp", 18881);
-    loadCredentials();
-    WiFi.begin(use_ssid, use_password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        serial_commands_.ReadSerial();
-        delay(0);
-    }
-    Serial.print("Connected: ");
-
-    Serial.println(WiFi.localIP());
-    webSocket.begin();
-    webSocket.onEvent(webSocketEvent);
-
-    attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
-    heartbeatMillis = millis();
-}
-
+/** UNUSED CODE FOR NOW */
+/*
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Preferred method for reading SNES + NES controller data.
 template< unsigned char latch, unsigned char data, unsigned char clock >
@@ -249,7 +250,21 @@ inline void sendRawData( unsigned char first, unsigned char count ) {
     Serial.write( SPLIT );
 }
 
+inline void loop_SNES() {
+    noInterrupts();
+    read_shiftRegister< SNES_LATCH , SNES_DATA , SNES_CLOCK >( SNES_BITCOUNT );
+    interrupts();
+    sendRawData( 0 , SNES_BITCOUNT );
+}
 
+inline void loop_NES() {
+    noInterrupts();
+    read_shiftRegister< SNES_LATCH , SNES_DATA , SNES_CLOCK >( NES_BITCOUNT );
+    interrupts();
+    sendRawData( 0 , NES_BITCOUNT );
+}
+
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Update loop definitions for the various console modes.
 
@@ -323,44 +338,36 @@ inline void loop_N64() {
     }
 }
 
-inline void loop_SNES() {
-    noInterrupts();
-    read_shiftRegister< SNES_LATCH , SNES_DATA , SNES_CLOCK >( SNES_BITCOUNT );
-    interrupts();
-    sendRawData( 0 , SNES_BITCOUNT );
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// General initialization, just sets all pins to input and starts serial communication.
+void setup() {
 
-inline void loop_NES() {
-    noInterrupts();
-    read_shiftRegister< SNES_LATCH , SNES_DATA , SNES_CLOCK >( NES_BITCOUNT );
-    interrupts();
-    sendRawData( 0 , NES_BITCOUNT );
-}
+    pinMode(N64_PIN, INPUT);
+    pinMode(MODEPIN_GC, INPUT);
+    pinMode(14, OUTPUT);
+    Serial.begin( 921600 );
+    serial_commands_.SetDefaultHandler(cmd_unrecognized);
+    serial_commands_.AddCommand(&cmd_wifi_read_);
+    serial_commands_.AddCommand(&cmd_wifi_write_);
+    serial_commands_.AddCommand(&cmd_tog_ser_);
+    Serial.println("Connecting");
+    WiFi.hostname("NintendoSpy");
+    MDNS.addService("http", "tcp", 18881);
+    loadCredentials();
+    WiFi.begin(use_ssid, use_password);
 
-/* Load WLAN credentials from EEPROM */
-void loadCredentials() {
-    EEPROM.begin(512);
-    EEPROM.get(0, use_ssid);
-    EEPROM.get(0 + sizeof(use_ssid), use_password);
-    char ok[2 + 1];
-    EEPROM.get(0 + sizeof(use_ssid) + sizeof(use_password), ok);
-    EEPROM.end();
-    if (String(ok) != String("OK")) {
-        use_ssid[0] = 0;
-        use_password[0] = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+        serial_commands_.ReadSerial();
+        delay(0);
     }
+    Serial.print("Connected: ");
 
-}
+    Serial.println(WiFi.localIP());
+    webSocket.begin();
+    webSocket.onEvent(webSocketEvent);
 
-/** Store WLAN credentials to EEPROM */
-void saveCredentials() {
-    EEPROM.begin(512);
-    EEPROM.put(0, use_ssid);
-    EEPROM.put(0 + sizeof(use_ssid), use_password);
-    char ok[2 + 1] = "OK";
-    EEPROM.put(0 + sizeof(use_ssid) + sizeof(use_password), ok);
-    EEPROM.commit();
-    EEPROM.end();
+    attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
+    heartbeatMillis = millis();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@ A live input-viewer for GameCube/N64 controllers over wifi or usb serial. Used f
 - PySerial
 - [python-websocket-server](https://github.com/Pithikos/python-websocket-server)
 ## Python Interface
-Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.
+Currently the python2.7 interface is built on top of TKinter. It is a means of starting a web server to host, the input viewer software (javascript + websockets), A Serial -> websocket bridge for older NintendoSpy hardware, and wifi credential management for the ESP2866 hardware.\
 ![](https://i.imgur.com/SqLejSL.png)
 ##### Serial Baudrate:
 - Baud Rate for connected serial device.
