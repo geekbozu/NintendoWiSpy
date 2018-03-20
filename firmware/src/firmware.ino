@@ -6,6 +6,9 @@
 #include <WebSocketsServer.h>
 #include <ArduinoOTA.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266HTTPUpdateServer.h>
+
 #define PIN_READ( pin )  GPIP(pin)
 #define PINC_READ( pin ) digitalRead(pin)
 
@@ -62,13 +65,16 @@ unsigned char rawData[ 128 ];
 // Runtime state variables
 bool trans_pending = false;
 bool use_serial = false;
+
 unsigned long heartbeatMillis;
+bool conActive = false;
 
 char serial_command_buffer_[256];
 SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_command_buffer_), "\n", " ");
 
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
 WebSocketsServer webSocket = WebSocketsServer(18881);
-
 
 //This is the default handler, and gets called when no other command matches.
 void cmd_unrecognized(SerialCommands* sender, const char* cmd) {
@@ -352,7 +358,9 @@ void setup() {
     serial_commands_.AddCommand(&cmd_tog_ser_);
     Serial.println("Connecting");
     WiFi.hostname("NintendoSpy");
-    MDNS.addService("http", "tcp", 18881);
+    MDNS.begin("NintendoSpy");
+    MDNS.addService("http", "tcp", 18881);    // Add websocket port.
+    MDNS.addService("http", "tcp", 80);       // Add http update server
     loadCredentials();
     WiFi.begin(use_ssid, use_password);
 
@@ -365,7 +373,8 @@ void setup() {
     Serial.println(WiFi.localIP());
     webSocket.begin();
     webSocket.onEvent(webSocketEvent);
-
+    httpUpdater.setup(&httpServer);
+    httpServer.begin();
     attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
     heartbeatMillis = millis();
 }
@@ -388,23 +397,17 @@ void loop() {
         loop_N64();
     }
 #endif
-
-    //webSocket.loop();                           // constantly check for websocket events
-    //ArduinoOTA.handle();                        //and updates.
     serial_commands_.ReadSerial();
-    if (millis() - heartbeatMillis > 10000) {
+    if (millis() - heartbeatMillis > 10000) {    // Every 10 seconds
         char RSSI[10];
         sprintf(RSSI, "RSSI: %d", WiFi.RSSI());
         webSocket.broadcastTXT(RSSI);
-        if (!webSocket.sendPing(0)) {
+        if (conActive && !webSocket.sendPing(0)) {  //If we have a stagnange connection
             Serial.println("Disconecting, Missed ping");
             webSocket.disconnect();
-            ESP.reset();
+            ESP.reset();                           // Just reboot
         }
         heartbeatMillis = millis();
     }
-    if (int stat = WiFi.status() != WL_CONNECTED) {
-        Serial.println(stat);
-    }
-
+    httpServer.handleClient();
 }
