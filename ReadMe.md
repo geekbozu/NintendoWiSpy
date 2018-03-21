@@ -136,4 +136,16 @@ Shows an image starting from "direction" based on Analog position
 Displays a static image.
 
 ### Hardware
-TO DOCUMENT
+- NODEMCU v3
+- GCN controller extender
+- N64 Controllers extender
+- 1 100Kohm resistor
+- 1 10K Ohm resistor
+- 1 10uf Capacitor
+
+Tie matching lines together for GCN/N64 controllers. Take the data line and tie it to Pin D1(GPIO5). The 100k and 10uf capacitor pull down pin D7(GPIO13). The 10k resistor is in series with +5 from the GCN connector.
+![Schematic](hardware/Schematic.png)
+
+If you are making a single controller variant,
+- GCN: Pull up pin D7(GPIO13)
+- N64: Pill down pin D7(GPIO13)
