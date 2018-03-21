@@ -17,7 +17,7 @@
     }
     function drawStrokeText(ctx, text, x, y){
         ctx.font = 'Calibri';
-        ctx.miterLimit=2;
+        ctx.miterLimit = 2;
         ctx.textAlign = 'center';
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 4;
@@ -150,6 +150,12 @@
                 config.stick[i].img.src = theme + config.stick[i].file;
             }
         }
+        if(config.rangeButton){
+            for(i in config.rangeButton){
+                config.rangeButton[i].img = new Image();
+                config.rangeButton[i].img.src = theme + config.rangeButton[i].file;
+            }
+        }
         if(config.static){
             for(i in config.static){
                 config.static[i].img = new Image();
@@ -231,6 +237,32 @@
                         }
                     }
                 }
+                for(i in config.rangeButton){ // For each rangeButton
+                    let max = true,
+                        min = false;
+                    for(let j in config.rangeButton[i].axis){ // for each axis type
+                        for(let r in config.rangeButton[i].axis[j]){ // For each "range"
+                            const from = Math.abs(config.rangeButton[i].axis[j][r].from),
+                                to = Math.abs(config.rangeButton[i].axis[j][r].to),
+                                pos = Math.abs(controlsObj.analog[j]);
+                            if(pos > to){
+                                max = false; // If Coordinates are outside max
+                            }
+                            if(pos >= from){
+                                min = true; // If Coordinates are inside min
+                            }
+                            if(max && min){
+                                break; // If both are in we can move to next axis
+                            }
+                        }
+                        if(!max){
+                            break; // If anything was over max we are done
+                        }
+                    }
+                    if(max && min){
+                        ctx.drawImage(config.rangeButton[i].img, config.rangeButton[i].x, config.rangeButton[i].y);
+                    }
+                }
                 for(i in config.stick){
                     if(config.stick[i].yname in controlsObj.analog && config.stick[i].xname in controlsObj.analog){ // If the axis exist
                         x = ((config.stick[i].xreverse ? -1 : 1) * config.stick[i].xrange);
@@ -251,6 +283,7 @@
                     }
                     ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
                 }
+
             }else{
                 console.log('No Controller type');
             }
@@ -261,6 +294,7 @@
                 ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
                 ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
             }
+
         };
         const controls = {
             GCN: (data, button, analog) => {

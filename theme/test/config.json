@@ -92,6 +92,35 @@
         "direction": "up"
     }
   },
+  "rangeButton":{
+    "ess":{
+      "file": "ESS.png",
+      "x": 0,
+      "y": 16,
+      "axis":{
+        "joyStickX":{
+          "range1":{
+            "from": 0.21875,
+            "to": 0.2890625
+          },
+          "range2":{
+            "from": -0.3046875,
+            "to": -0.2578125
+          }
+        },
+        "joyStickY":{
+          "range1":{
+            "from": 0.1953125,
+            "to": 0.265625
+          },
+          "range2":{
+            "from": -0.3671875,
+            "to": -0.296875
+          }
+        }
+      }
+    }
+  },
   "static": {
     "background": {
         "x": 0,

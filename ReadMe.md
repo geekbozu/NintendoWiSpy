@@ -87,6 +87,35 @@ See included themes for fully functional examples
         "y": 0,                     Y Coordinate
         "file": "back.png"          Image File Name
     }
+  },
+  "rangeButton":{                   Range Button Object
+    "ess":{                         name
+      "file": "ESS.png",            Image file
+      "x": 0,                       X Coordinate
+      "y": 16,                      Y Coordinate
+      "axis":{                      Object containing axis to check
+        "joyStickX":{               First Axis name
+          "range1":{                range1..rangeN
+            "from": 0.21875,        From what position
+            "to": 0.2890625         to what position
+          },
+          "range2":{
+            "from": -0.3046875,     negatives go from lowest
+            "to": -0.2578125        To highest
+          }
+        },
+        "joyStickY":{               Second axis
+          "range1":{
+            "from": 0.1953125,
+            "to": 0.265625
+          },
+          "range2":{
+            "from": -0.3671875,
+            "to": -0.296875
+          }
+        }
+      }
+    }
   }
 }
 ```
@@ -115,7 +144,7 @@ Buttons when pressed show the image file.
 
 ### stick:
 Shows a image based off of the Stick Location.
-##### Available stick GCN:
+##### Available stick :
 - joyStick cStick
 
 ##### Available stick N64:
@@ -132,6 +161,12 @@ Shows an image starting from "direction" based on Analog position
 - NONE
 ##### available Axis
 - See stick axis + available analog
+
+### rangeButton:
+Shows an image if an analog or stick is within the specified bounds
+##### available Axis
+- LTrig rTrig joyStickX joyStickY cStickX cStickY
+
 ### static:
 Displays a static image.
 
