@@ -192,6 +192,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 }
 
+void handleRoot() {                         // When URI / is requested, send a web page with a button to toggle the LED
+    httpServer.send(200, "text/html", "<form action=\"/Zero\" method=\"POST\"><input type=\"submit\" value=\"Zero Joystick\"></form><form action=\"/update\" method=\"get\"><input type=\"submit\" value=\"Update\"></form>");
+}
+void handleZero() {                          // If a POST request is made to URI /LED
+    webSocket.broadcastTXT("ZERO");
+    httpServer.sendHeader("Location", "/");       // Add a header to respond with a new location for the browser to go to the home page again
+    httpServer.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ISR for spying GC and N64 controller commands
 // Performs a read cycle from one of Nintendo's one-wire interface based controllers.
@@ -375,6 +383,8 @@ void setup() {
     webSocket.onEvent(webSocketEvent);
     httpUpdater.setup(&httpServer);
     httpServer.begin();
+    httpServer.on("/", HTTP_GET, handleRoot);
+    httpServer.on("/Zero", HTTP_POST, handleZero);
     attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
     heartbeatMillis = millis();
 }

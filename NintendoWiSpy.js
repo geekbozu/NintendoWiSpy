@@ -96,7 +96,14 @@
         var heartbeatInterval = null,
             missedHeartbeats = 0,
             i,
-            RSSI = null;
+            RSSI = null,
+            xofs = 0,
+            yofs = 0,
+            cxofs = 0,
+            cyofs = 0,
+            lofs = 0,
+            rofs = 0,
+            zero = true;
 
         if(config.width){
             canvas.width = config.width;
@@ -200,7 +207,7 @@
             // console.log('Recieved: ' + event.data);
             let i;
 
-            if(event.data == 'Connected'){
+            if(event.data === 'Connected'){
                 return;
             }
             if(event.data === heartbeatMsg){
@@ -209,7 +216,10 @@
                 missedHeartbeats = 0;
                 return;
             }
-
+            if(event.data === 'ZERO'){
+                zero = true;
+                return;
+            }
             if(event.data.slice(0, 4) === 'RSSI'){
                 RSSI = event.data.slice(5);
                 return;
@@ -283,10 +293,10 @@
                     }
                     ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
                 }
-
             }else{
                 console.log('No Controller type');
             }
+
             if(RSSI != null && config.WiFiStatus){
                 ctx.font = config.WiFiStatus.height + ' Calibri';
                 ctx.textAlign = 'left';
@@ -294,7 +304,6 @@
                 ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
                 ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
             }
-
         };
         const controls = {
             GCN: (data, button, analog) => {
@@ -307,12 +316,21 @@
                 button.L = !!~~data[9];
                 button.R = !!~~data[10];
 
-                analog.joyStickX = (getMultiByte(data, 16) - 128) / 128;
-                analog.joyStickY = (getMultiByte(data, 16 + 8) - 128) / 128;
-                analog.cStickX = (getMultiByte(data, 16 + 16) - 128) / 128;
-                analog.cStickY = (getMultiByte(data, 16 + 24) - 128) / 128;
-                analog.lTrig = getMultiByte(data, 16 + 32) / 256;
-                analog.rTrig = getMultiByte(data, 16 + 40) / 256;
+                analog.joyStickX = ((getMultiByte(data, 16) - 128) / 128) - xofs;
+                analog.joyStickY = ((getMultiByte(data, 16 + 8) - 128) / 128) - yofs;
+                analog.cStickX = ((getMultiByte(data, 16 + 16) - 128) / 128) - cxofs;
+                analog.cStickY = ((getMultiByte(data, 16 + 24) - 128) / 128) - cyofs;
+                analog.lTrig = (getMultiByte(data, 16 + 32) / 256) - lofs;
+                analog.rTrig = (getMultiByte(data, 16 + 40) / 256) - rofs;
+                if(zero){ // If we have to zero axis
+                    xofs = (getMultiByte(data, 16) - 128) / 128;
+                    yofs = (getMultiByte(data, 16 + 8) - 128) / 128;
+                    cxofs = (getMultiByte(data, 16 + 16) - 128) / 128;
+                    cyofs = (getMultiByte(data, 16 + 24) - 128) / 128;
+                    lofs = getMultiByte(data, 16 + 32) / 256;
+                    rofs = getMultiByte(data, 16 + 40) / 256;
+                    zero = false;
+                }
             },
             N64: (data, button, analog) => {
                 button.START = !!~~data[3];
@@ -340,6 +358,13 @@
                 }
                 analog.joyStickX /= 128;
                 analog.joyStickY /= 128;
+                if(zero){ // If we have to zero axis
+                    xofs = analog.joyStickX;
+                    yofs = analog.joyStickY;
+                    zero = false;
+                }
+                analog.joyStickX -= xofs;
+                analog.joyStickY -= yofs;
             }
         };
         function extractControls(data){
