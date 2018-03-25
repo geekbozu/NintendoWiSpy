@@ -171,7 +171,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     break;
 
     case WStype_TEXT:
-        Serial.printf("[%u] get Text: %s\n", num, payload);
+        //Serial.printf("[%u] get Text: %s\n", num, payload);
         if (memcmp(payload, "ping", 4) == 0) {
             webSocket.sendTXT(num, HEARTBEATMSG);
         }
@@ -412,9 +412,9 @@ void loop() {
         char RSSI[10];
         sprintf(RSSI, "RSSI: %d", WiFi.RSSI());
         webSocket.broadcastTXT(RSSI);
-        if (conActive && !webSocket.sendPing(0)) {  //If we have a stagnange connection
-            Serial.println("Disconecting, Missed ping");
-            webSocket.disconnect();
+        Serial.printf("WiFi Status:[ %u]\n", WiFi.status());
+        if ((conActive && !webSocket.sendPing(0)) || WiFi.status() != WL_CONNECTED){  //If we have a stagnange connection
+            Serial.printf("Rebooting Lost connection: %u",WiFi.status());
             ESP.reset();                           // Just reboot
         }
         heartbeatMillis = millis();
