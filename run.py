@@ -11,21 +11,27 @@ class ThreadingSimpleServer(SocketServer.ThreadingMixIn,BaseHTTPServer.HTTPServe
 
 httpServerRunning = False
 serialServerRunning = False
-ser = serial.Serial()
 
 def serialServerLoop():
     global serialServerRunning
-    ser.open()
-    ser.baudrate = SerialSpinBoxVar.get()
-    ser.write('TS 1\n')
-    while serialServerRunning:
-        server.handle_request()
-        line = ser.readline()
-        server.handle_request()
-        server.send_message_to_all(line)
-    ser.write('TS 0\n')
-    ser.close()
-    server.server_close()
+    try:
+        ser = serial.Serial(serialbox.get())
+        ser.baudrate = SerialSpinBoxVar.get()
+        ser.write('TS 1\n')
+        while serialServerRunning:
+            server.handle_request()
+            line = ser.readline()
+            server.handle_request()
+            server.send_message_to_all(line)
+        ser.write('TS 0\n')
+        ser.close()
+        server.server_close()
+    except Exception as e:
+        print "Failed to open"
+        print e
+        serialToggle()
+        return
+
 
 def httpToggle():
     global httpServerRunning
@@ -58,6 +64,7 @@ def serialToggle():
         serialthread.daemon = True
         serialthread.start()
         SerialButton.configure(bg='#0F0')
+
 def new_client(client,server):
     print "New client gotten ", client
 
@@ -66,7 +73,7 @@ def genUrl():
         tkMessageBox.showerror("Url Error","WebSocketServer Url can not be blank!")
         return
     try:
-        val = "http://localhost:{}/?theme={}&websockport={}&websocketserver={}".format(HttpSpinBoxVar.get(),themebox.get(themebox.curselection()),WebSpinBoxVar.get(),WebSockUrlEntryVar.get())
+        val = "http://localhost:{}/?theme={}&websockport={}&websocketserver={}".format(HttpSpinBoxVar.get(),themebox.get(),WebSpinBoxVar.get(),WebSockUrlEntryVar.get())
     except TclError:
         tkMessageBox.showerror("Input Error","Bad input. Ensure all items are selected")
         return
@@ -105,7 +112,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.""")
 
 def setWifiCreds():
-    ser = serial.Serial(serialbox.get(serialbox.curselection()))
+    ser = serial.Serial(serialbox.get())
     ser.baudrate = SerialSpinBoxVar.get()
     ser.reset_input_buffer()
     ser.reset_output_buffer()
@@ -113,7 +120,7 @@ def setWifiCreds():
     ser.close()
 
 def setWinCredMan():
-    ser = serial.Serial(serialbox.get(serialbox.curselection()))
+    ser = serial.Serial(serialbox.get())
     ser.baudrate = SerialSpinBoxVar.get()
     window = Toplevel(mainframe)
     window.title("Wifi Manager")
@@ -145,7 +152,7 @@ if __name__ == "__main__":
     menubar.add_command(label="About", command=aboutWindow)
     root.config(menu=menubar)
     SerialSpinBoxVar = IntVar(mainframe)
-    SerialSpinBoxVar.set("115200")
+    SerialSpinBoxVar.set("921600")
     WebSpinBoxVar = IntVar(mainframe)
     WebSpinBoxVar.set("18881")
     HttpSpinBoxVar = IntVar(mainframe)
@@ -169,13 +176,17 @@ if __name__ == "__main__":
     lists = ttk.Frame(mainframe)
     Label(lists,text='Serial Port').grid(column=0,row=0)
     Label(lists,text='Theme').grid(column=1,row=0)
-    serialbox = Listbox(lists,exportselection=False)
-    for i in serial.tools.list_ports.comports():
-        serialbox.insert(END,i.device)
+    serialbox = ttk.Combobox(lists,exportselection=False,height=5)
+    serialbox.config(value=[i.device for i in serial.tools.list_ports.comports()])
+    #for i in serial.tools.list_ports.comports():
+    #    print dir(serialbox.insert)
+    #    serialbox.values.insert(END,i.device)
     serialbox.grid(column=0,row=1)
-    themebox = Listbox(lists,exportselection=False)
-    for i in os.listdir('theme'):
-        themebox.insert(END,i)
+    themebox = ttk.Combobox(lists,exportselection=False,height=5)
+    themebox.config(value=[i for i in os.listdir('theme')])
+    #for i in os.listdir('theme'):
+    #    themebox.values.insert(END,i)
+
     themebox.grid(column=1,row=1)
     lists.pack()
 
