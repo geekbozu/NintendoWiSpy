@@ -1,5 +1,5 @@
 import logging
-import threading,sys,os,webbrowser
+import threading,sys,os,webbrowser,time
 import serial,serial.tools.list_ports
 import SimpleHTTPServer, BaseHTTPServer, SocketServer
 from websocket_server import WebsocketServer
@@ -18,11 +18,15 @@ def serialServerLoop():
         ser = serial.Serial(serialbox.get())
         ser.baudrate = SerialSpinBoxVar.get()
         ser.write('TS 1\n')
+        ctime = time.time()
         while serialServerRunning:
             server.handle_request()
             line = ser.readline()
             server.handle_request()
             server.send_message_to_all(line)
+            if (time.time() - ctime) > 4:
+                ctime = time.time()
+                server.send_message_to_all("pong")
         ser.write('TS 0\n')
         ser.close()
         server.server_close()
@@ -32,6 +36,20 @@ def serialServerLoop():
         serialToggle()
         return
 
+def serialToggle():
+    global serialServerRunning,server
+    if serialServerRunning:
+        SerialButton.configure(bg='#F00')
+        serialServerRunning = False
+    else:
+        server = WebsocketServer(WebSpinBoxVar.get(), host='127.0.0.1', loglevel=logging.INFO)
+        server.set_fn_new_client(new_client)
+        server.timeout = 0
+        serialServerRunning = True
+        serialthread = threading.Thread(target = serialServerLoop)
+        serialthread.daemon = True
+        serialthread.start()
+        SerialButton.configure(bg='#0F0')
 
 def httpToggle():
     global httpServerRunning
@@ -49,21 +67,6 @@ def httpToggle():
         httpthread.daemon = True
         httpthread.start()
         httpServerRunning = True
-
-def serialToggle():
-    global serialServerRunning,server
-    if serialServerRunning:
-        SerialButton.configure(bg='#F00')
-        serialServerRunning = False
-    else:
-        server = WebsocketServer(WebSpinBoxVar.get(), host='127.0.0.1', loglevel=logging.INFO)
-        server.set_fn_new_client(new_client)
-        server.timeout = 0
-        serialServerRunning = True
-        serialthread = threading.Thread(target = serialServerLoop)
-        serialthread.daemon = True
-        serialthread.start()
-        SerialButton.configure(bg='#0F0')
 
 def new_client(client,server):
     print "New client gotten ", client

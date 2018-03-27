@@ -74,7 +74,7 @@ SerialCommands serial_commands_(&Serial, serial_command_buffer_, sizeof(serial_c
 
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
-WebSocketsServer webSocket = WebSocketsServer(18881);
+WebSocketsServer webSocket = WebSocketsServer(18881,"","");
 
 //This is the default handler, and gets called when no other command matches.
 void cmd_unrecognized(SerialCommands* sender, const char* cmd) {
