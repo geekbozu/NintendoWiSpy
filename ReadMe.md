@@ -45,6 +45,7 @@ See included themes for fully functional examples
   "author": "Geekboy1011",          Theme Author
   "width": 200,                     Width of theme
   "height": 50,                     Height of Theme
+  "inputdelay": 900,                Input Delay in MS to match video
   "WiFiStatus": {                   Optional Struct
     "height": "10px",               WiFi status message height
     "x": 0,                         X
@@ -127,6 +128,7 @@ Stores global information for the theme.
 - Author: Author
 - width: Width of theme
 - height: height of theme
+- inputdelay: Render Delay in MS
 
 ### WiFiStatus:
 Optional

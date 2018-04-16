@@ -95,12 +95,13 @@
             socket = new ReconnectingWebsocket('ws://' + params.websocketserver + ':' + params.websockport);
         var heartbeatInterval = null,
             missedHeartbeats = 0,
+            ginputdelay = 0,
             i,
             RSSI = null,
             xofs = 0,
             yofs = 0,
-            cxofs = 0,
             cyofs = 0,
+            cxofs = 0,
             lofs = 0,
             rofs = 0,
             zero = true;
@@ -110,6 +111,9 @@
         }
         if(config.height){
             canvas.height = config.height;
+        }
+        if(config.inputdelay){
+            ginputdelay = config.inputdelay;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2);
@@ -171,10 +175,10 @@
         }
         const GCN_N64_Direction = {
             up: (controlsObj, controlConf, x, y, sy, sx, sheight, swidth) => {
+                sheight = controlsObj.analog[controlConf.axis] * controlConf.img.height;
                 sx = 0;
                 sy = controlConf.img.height - sheight;
                 y += sy;
-                sheight = controlsObj.analog[controlConf.axis] * controlConf.img.height;
                 swidth = controlConf.img.width;
                 return [x, y, sy, sx, sheight, swidth];
             },
@@ -205,7 +209,8 @@
 
         socket.onmessage = (event) => {
             // console.log('Recieved: ' + event.data);
-            let i;
+            let controlsObj,
+                i;
 
             if(event.data === 'Connected'){
                 return;
@@ -224,86 +229,88 @@
                 RSSI = event.data.slice(5);
                 return;
             }
+            controlsObj = extractControls(event.data);
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            for(i in config.static){
-                ctx.drawImage(config.static[i].img, config.static[i].x, config.static[i].y);
-            }
-            if(config.controllerType === 'GCN' || config.controllerType === 'N64'){
-                let controlsObj = extractControls(event.data),
-                    x,
-                    y,
-                    sy,
-                    sx,
-                    sheight,
-                    swidth;
-                for(i in config.button){
-                    if(controlsObj.button[i]){
-                        if(config.button[i].width && config.button[i].height){
-                            ctx.drawImage(config.button[i].img, config.button[i].x, config.button[i].y, config.button[i].width, config.button[i].height);
-                        }else{
-                            ctx.drawImage(config.button[i].img, config.button[i].x, config.button[i].y);
-                        }
-                    }
+                for(i in config.static){
+                    ctx.drawImage(config.static[i].img, config.static[i].x, config.static[i].y);
                 }
-                for(i in config.rangeButton){ // For each rangeButton
-                    let max = true,
-                        min = false;
-                    for(let j in config.rangeButton[i].axis){ // for each axis type
-                        for(let r in config.rangeButton[i].axis[j]){ // For each "range"
-                            const from = Math.abs(config.rangeButton[i].axis[j][r].from),
-                                to = Math.abs(config.rangeButton[i].axis[j][r].to),
-                                pos = Math.abs(controlsObj.analog[j]);
-                            if(pos > to){
-                                max = false; // If Coordinates are outside max
-                            }
-                            if(pos >= from){
-                                min = true; // If Coordinates are inside min
-                            }
-                            if(max && min){
-                                break; // If both are in we can move to next axis
+                if(config.controllerType === 'GCN' || config.controllerType === 'N64'){
+                    let x,
+                        y;
+
+                    for(i in config.button){
+                        if(controlsObj.button[i]){
+                            if(config.button[i].width && config.button[i].height){
+                                ctx.drawImage(config.button[i].img, config.button[i].x, config.button[i].y, config.button[i].width, config.button[i].height);
+                            }else{
+                                ctx.drawImage(config.button[i].img, config.button[i].x, config.button[i].y);
                             }
                         }
-                        if(!max){
-                            break; // If anything was over max we are done
+                    }
+                    for(i in config.rangeButton){ // For each rangeButton
+                        let max = true,
+                            min = false;
+                        for(let j in config.rangeButton[i].axis){ // for each axis type
+                            for(let r in config.rangeButton[i].axis[j]){ // For each "range"
+                                const from = Math.abs(config.rangeButton[i].axis[j][r].from),
+                                    to = Math.abs(config.rangeButton[i].axis[j][r].to),
+                                    pos = Math.abs(controlsObj.analog[j]);
+                                if(pos > to){
+                                    max = false; // If Coordinates are outside max
+                                }
+                                if(pos >= from){
+                                    min = true; // If Coordinates are inside min
+                                }
+                                if(max && min){
+                                    break; // If both are in we can move to next axis
+                                }
+                            }
+                            if(!max){
+                                break; // If anything was over max we are done
+                            }
+                        }
+                        if(max && min){
+                            ctx.drawImage(config.rangeButton[i].img, config.rangeButton[i].x, config.rangeButton[i].y);
                         }
                     }
-                    if(max && min){
-                        ctx.drawImage(config.rangeButton[i].img, config.rangeButton[i].x, config.rangeButton[i].y);
+                    for(i in config.stick){
+                        if(config.stick[i].yname in controlsObj.analog && config.stick[i].xname in controlsObj.analog){ // If the axis exist
+                            x = ((config.stick[i].xreverse ? -1 : 1) * config.stick[i].xrange);
+                            y = ((config.stick[i].yreverse ? 1 : -1) * config.stick[i].yrange);
+                            x *= controlsObj.analog[config.stick[i].xname];
+                            y *= controlsObj.analog[config.stick[i].yname];
+                            x += config.stick[i].x;
+                            y += config.stick[i].y;
+                            ctx.drawImage(config.stick[i].img, x, y);
+                        }
                     }
-                }
-                for(i in config.stick){
-                    if(config.stick[i].yname in controlsObj.analog && config.stick[i].xname in controlsObj.analog){ // If the axis exist
-                        x = ((config.stick[i].xreverse ? -1 : 1) * config.stick[i].xrange);
-                        y = ((config.stick[i].yreverse ? 1 : -1) * config.stick[i].yrange);
-                        x *= controlsObj.analog[config.stick[i].xname];
-                        y *= controlsObj.analog[config.stick[i].yname];
-                        x += config.stick[i].x;
-                        y += config.stick[i].y;
-                        ctx.drawImage(config.stick[i].img, x, y);
+                    for(i in config.analog){
+                        let sy,
+                            sx,
+                            sheight,
+                            swidth;
+                        x = config.analog[i].x;
+                        y = config.analog[i].y;// Location on screen
+                        let direction = config.analog[i].direction;
+                        if(direction in GCN_N64_Direction){
+                            [x, y, sy, sx, sheight, swidth] = GCN_N64_Direction[config.analog[i].direction](controlsObj, config.analog[i], x, y, sy, sx, sheight, swidth);
+                        }
+                        ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
                     }
+                }else{
+                    console.log('No Controller type');
                 }
-                for(i in config.analog){
-                    x = config.analog[i].x;
-                    y = config.analog[i].y;// Location on screen
-                    let direction = config.analog[i].direction;
-                    if(direction in GCN_N64_Direction){
-                        [x, y, sy, sx, sheight, swidth] = GCN_N64_Direction[config.analog[i].direction](controlsObj, config.analog[i], x, y, sy, sx, sheight, swidth);
-                    }
-                    ctx.drawImage(config.analog[i].img, sx, sy, swidth, sheight, x, y, swidth, sheight);
-                }
-            }else{
-                console.log('No Controller type');
-            }
 
-            if(RSSI != null && config.WiFiStatus){
-                ctx.font = config.WiFiStatus.height + ' Calibri';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
-                ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
-            }
+                if(RSSI != null && config.WiFiStatus){
+                    ctx.font = config.WiFiStatus.height + ' Calibri';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
+                    ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
+                }
+            }, ginputdelay);
         };
         const controls = {
             GCN: (data, button, analog) => {

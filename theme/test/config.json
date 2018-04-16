@@ -5,6 +5,7 @@
   "cite": false,
   "width": 200,
   "height": 50,
+  "inputdelay": 900,
   "WiFiStatus": {
     "height": "10px",
     "x": 0,
@@ -82,14 +83,14 @@
         "file": "L.png",
         "x": 71,
         "y": 21,
-        "direction": "left"
+        "direction": "down"
     },
     "rTrig": {
         "axis": "rTrig",
         "file": "R.png",
         "x": 85,
         "y": 21,
-        "direction": "up"
+        "direction": "down"
     }
   },
   "rangeButton":{
@@ -100,22 +101,22 @@
       "axis":{
         "joyStickX":{
           "range1":{
-            "from": 0.21875,
-            "to": 0.2890625
+            "from": 0.234375,
+            "to": 0.3125
           },
           "range2":{
-            "from": -0.3046875,
-            "to": -0.2578125
+            "from": -0.3125,
+            "to": -0.234375
           }
         },
         "joyStickY":{
           "range1":{
-            "from": 0.1953125,
-            "to": 0.265625
+            "from": 0.234375,
+            "to": 0.3125
           },
           "range2":{
-            "from": -0.3671875,
-            "to": -0.296875
+            "from": -0.3125,
+            "to": -0.234375
           }
         }
       }
