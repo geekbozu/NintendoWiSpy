@@ -210,7 +210,8 @@
         socket.onmessage = (event) => {
             // console.log('Recieved: ' + event.data);
             let controlsObj,
-                i;
+                i,
+                d = '';
 
             if(event.data === 'Connected'){
                 return;
@@ -229,7 +230,11 @@
                 RSSI = event.data.slice(5);
                 return;
             }
-            controlsObj = extractControls(event.data);
+            var char = String.fromCharCode(0)
+            for(i of event.data){
+                d += (i == char) ? '0':'1';
+            }
+            controlsObj = extractControls(d);
             setTimeout(() => {
                 requestAnimationFrame( () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);

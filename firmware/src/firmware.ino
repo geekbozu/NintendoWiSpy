@@ -285,25 +285,26 @@ inline void loop_NES() {
 inline void loop_gc() {
     if (trans_pending) {
         if (memcmp(rawData, GC_PREFIX_STRING, sizeof(GC_PREFIX_STRING)) == 0) { //Check that we recieved a packet validly
-            for ( unsigned char i = GC_PREFIX ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
-                rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
-                if (use_serial) {
-                    Serial.write(rawData[i]);
+            if (use_serial){
+                for ( unsigned char i = GC_PREFIX ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
+                    rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
+                    if (use_serial) {
+                        Serial.write(rawData[i]);
+                    }
                 }
-            }
-            if (use_serial) {
                 Serial.write(SPLIT);
+
             } else {
                 webSocket.broadcastTXT(rawData + GC_PREFIX, GC_BITCOUNT);
             }
 
-        } else {
+        } /*else {
             for ( unsigned char i = 0 ; i < GC_PREFIX + GC_BITCOUNT; i++ ) {
                 rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
                 //Serial.write(rawData[i]);
             }
             //Serial.print("Bad GCN Frame: "); Serial.printf("%s",rawData); Serial.println(' ');
-        }
+        }*/
         memset(rawData, 0, sizeof(rawData)); //Clear frame incase we got bad frame
         trans_pending = false;
         unsigned long startmillis = micros();
@@ -311,6 +312,7 @@ inline void loop_gc() {
             if (!PIN_READ(5)) {
                 startmillis = micros();
             }
+            yield();
         }
         defined_bits = GC_PREFIX + GC_BITCOUNT;
         attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
@@ -365,11 +367,13 @@ void setup() {
     serial_commands_.AddCommand(&cmd_wifi_write_);
     serial_commands_.AddCommand(&cmd_tog_ser_);
     Serial.println("Connecting");
+    WiFi.persistent( false );
     WiFi.hostname("NintendoSpy");
     MDNS.begin("NintendoSpy");
     MDNS.addService("http", "tcp", 18881);    // Add websocket port.
     MDNS.addService("http", "tcp", 80);       // Add http update server
     loadCredentials();
+    WiFi.mode(WIFI_STA);
     WiFi.begin(use_ssid, use_password);
 
     while (WiFi.status() != WL_CONNECTED) {
@@ -420,4 +424,5 @@ void loop() {
         heartbeatMillis = millis();
     }
     httpServer.handleClient();
+    webSocket.loop();
 }
