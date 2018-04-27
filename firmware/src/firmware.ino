@@ -11,7 +11,7 @@
 
 #define PIN_READ( pin )  GPIP(pin)
 #define PINC_READ( pin ) digitalRead(pin)
-
+#define IRAM_ATTR __attribute__((section(".iram.text")))
 #define MODEPIN_SNES 0
 #define MODEPIN_N64  1
 #define MODEPIN_GC   13
@@ -206,7 +206,7 @@ void handleZero() {                          // If a POST request is made to URI
 // This includes the N64 and the Gamecube.
 //     defined_bits = Number of bits to read from the line.
 //     always reads from pin 5 for now
-void gc_n64_isr() {
+void IRAM_ATTR gc_n64_isr() {
     //Takes ~2us to enter
     ESP.wdtFeed();  //This may take some time. Feed the dog;
     GPOS = (1 << 14);
@@ -217,8 +217,8 @@ void gc_n64_isr() {
         while ( !PIN_READ(5) );
         unsigned long sMicros = micros();
         while ( PIN_READ(5) ) {
-            if ((micros() - sMicros) >= 4) {
-                memset(rawData, 0, sizeof(rawData));
+            if ((micros() - sMicros) >= 4){
+                //memset(rawData, 0, sizeof(rawData));
                 attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
                 return;
             }
