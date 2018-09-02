@@ -193,10 +193,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 }
 
 void handleRoot() {                         // When URI / is requested, send a web page with a button to toggle the LED
-    httpServer.send(200, "text/html", "<form action=\"/Zero\" method=\"POST\"><input type=\"submit\" value=\"Zero Joystick\"></form><form action=\"/update\" method=\"get\"><input type=\"submit\" value=\"Update\"></form>");
+    httpServer.send(200, "text/html", 
+    "<form action=\"/do?action=ZERO\" method=\"POST\"><input type=\"submit\" value=\"Zero Joystick\"></form>"
+    "<form action=\"/do?action=REFRESH\" method=\"POST\"><input type=\"submit\" value=\"Refresh UI\"></form>"
+    "<form action=\"/do?action=CLEAR\" method=\"POST\"><input type=\"submit\" value=\"Clear\"></form>"
+    "<form action=\"/do?action=COUNTS\" method=\"POST\"><input type=\"submit\" value=\"Counts\"></form>"
+    "<form action=\"/update\" method=\"get\"><input type=\"submit\" value=\"Update\"></form>");
 }
-void handleZero() {                          // If a POST request is made to URI /LED
-    webSocket.broadcastTXT("ZERO");
+void handleAction() {                          // If a POST request is made to URI /LED
+    String tmp = httpServer.arg("action");
+    webSocket.broadcastTXT(tmp);
     httpServer.sendHeader("Location", "/");       // Add a header to respond with a new location for the browser to go to the home page again
     httpServer.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
@@ -368,8 +374,8 @@ void setup() {
     serial_commands_.AddCommand(&cmd_tog_ser_);
     Serial.println("Connecting");
     WiFi.persistent( false );
-    WiFi.hostname("NintendoSpy");
-    MDNS.begin("NintendoSpy");
+    WiFi.hostname("NintendoWiSpy");
+    MDNS.begin("NintendoWiSpy");
     MDNS.addService("http", "tcp", 18881);    // Add websocket port.
     MDNS.addService("http", "tcp", 80);       // Add http update server
     loadCredentials();
@@ -388,7 +394,7 @@ void setup() {
     httpUpdater.setup(&httpServer);
     httpServer.begin();
     httpServer.on("/", HTTP_GET, handleRoot);
-    httpServer.on("/Zero", HTTP_POST, handleZero);
+    httpServer.on("/do", HTTP_POST, handleAction);
     attachInterrupt(digitalPinToInterrupt(5), gc_n64_isr, FALLING);
     heartbeatMillis = millis();
 }
@@ -419,7 +425,7 @@ void loop() {
         Serial.printf("WiFi Status:[ %u]\n", WiFi.status());
         if ((conActive && !webSocket.sendPing(0)) || WiFi.status() != WL_CONNECTED){  //If we have a stagnange connection
             Serial.printf("Rebooting Lost connection: %u",WiFi.status());
-            ESP.reset();                           // Just reboot
+          //  ESP.reset();                           // Just reboot
         }
         heartbeatMillis = millis();
     }

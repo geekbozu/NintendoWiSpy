@@ -1,0 +1,179 @@
+{
+  "controllerType": "GCN",
+  "theme": "Canadian Gamecube",
+  "author": "Geekboy1011",
+  "cite": false,
+  "width": 800,
+  "height": 200,
+  "inputdelay": 0,
+  "WiFiStatus": {
+    "height": "10px",
+    "x": 0,
+    "y": 0
+  },
+  "inputView": {
+    "button": {
+      "A": {
+        "x": 142,
+        "y": 75,
+        "file": "A.png"
+      },
+      "B": {
+        "x": 211,
+        "y": 75,
+        "file": "B.png"
+      },
+      "L": {
+        "x": 283,
+        "y": 75,
+        "file": "L.png"
+      },
+      "R": {
+        "x": 327,
+        "y": 75,
+        "file": "R.png"
+      },
+      "X": {
+        "x": 401,
+        "y": 75,
+        "file": "X.png"
+      },
+      "Y": {
+        "x": 470,
+        "y": 75,
+        "file": "Y.png"
+      },
+      "Z": {
+        "x": 525,
+        "y": 75,
+        "file": "Z.png"
+      },
+      "START": {
+        "x": 584,
+        "y": 75,
+        "file": "Start.png"
+      }
+    },
+    "stick": {
+      "joyStick": {
+        "xname": "joyStickX",
+        "yname": "joyStickY",
+        "file": "Stick.png",
+        "x": 56,
+        "y": 76,
+        "xrange": 57,
+        "yrange": 57,
+        "xreverse": false,
+        "yreverse": false
+      },
+      "cStick": {
+        "xname": "cStickX",
+        "yname": "cStickY",
+        "file": "Stick.png",
+        "x": 691,
+        "y": 76,
+        "xrange": 57,
+        "yrange": 57,
+        "xreverse": false,
+        "yreverse": false
+      }
+    },
+    "analog": {
+      "lTrig": {
+        "axis": "lTrig",
+        "file": "L.png",
+        "x": 283,
+        "y": 75,
+        "direction": "down"
+      },
+      "rTrig": {
+        "axis": "rTrig",
+        "file": "R.png",
+        "x": 327,
+        "y": 75,
+        "direction": "down"
+      }
+    },
+    "rangeButton": {
+      "ess": {
+        "file": "ESS.png",
+        "x": 0,
+        "y": 21,
+        "axis": {
+          "joyStickX": {
+            "range1": {
+              "from": 0.234375,
+              "to": 0.3125
+            },
+            "range2": {
+              "from": -0.3125,
+              "to": -0.234375
+            }
+          },
+          "joyStickY": {
+            "range1": {
+              "from": 0.234375,
+              "to": 0.3125
+            },
+            "range2": {
+              "from": -0.3125,
+              "to": -0.234375
+            }
+          }
+        }
+      }
+    },
+    "static": {
+      "background": {
+        "x": 0,
+        "y": 0,
+        "file": "Background.png"
+      }
+    }
+  },
+  "countView": {
+    "font": "50px Courier",
+    "button": {
+      "A": {
+        "x": 0,
+        "y": 0,
+        "file": "A.png"
+      },
+      "B": {
+        "x": 0,
+        "y": 90,
+        "file": "B.png"
+      },
+      "L": {
+        "x": 200,
+        "y": 0,
+        "file": "L.png"
+      },
+      "R": {
+        "x": 200,
+        "y": 90,
+        "file": "R.png"
+      },
+      "X": {
+        "x": 400,
+        "y": 0,
+        "file": "X.png"
+      },
+      "Y": {
+        "x": 400,
+        "y": 90,
+        "file": "Y.png"
+      },
+      "Z": {
+        "x": 600,
+        "y": 0,
+        "file": "Z.png"
+      },
+      "START": {
+        "x": 600,
+        "y": 90,
+        "file": "Start.png"
+      }
+    }
+  }
+}
