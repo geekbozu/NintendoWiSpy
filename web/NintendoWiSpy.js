@@ -1,4 +1,3 @@
-var ReconnectingWebSocket = require('reconnecting-websocket');
 (function () {
     async function getJSON(url) {
         const res = await fetch(url);
@@ -87,7 +86,8 @@ var ReconnectingWebSocket = require('reconnecting-websocket');
         return obj;
     }
     window.onload = async () => {
-        const params = getAllUrlParams(),
+        const ReconnectingWebSocket = require('reconnecting-websocket'),
+            params = getAllUrlParams(),
             theme = 'theme\\' + params.theme + '\\',
             config = await getJSON(theme + 'config.json'),
             canvas = document.getElementById('myCanvas'),
