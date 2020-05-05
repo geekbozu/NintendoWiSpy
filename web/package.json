@@ -1,0 +1,15 @@
+{
+  "name": "nintendowispy",
+  "version": "1.0.0",
+  "description": "Input Display for NintendoWiSpy",
+  "main": "index.js",
+  "dependencies": {
+    "reconnecting-websocket": "^4.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Timothy 'Geekboy1011' Keller",
+  "license": "ISC"
+}
