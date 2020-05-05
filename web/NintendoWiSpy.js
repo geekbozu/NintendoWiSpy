@@ -1,3 +1,4 @@
+var ReconnectingWebSocket = require('reconnecting-websocket');
 (function () {
     async function getJSON(url) {
         const res = await fetch(url);
@@ -92,7 +93,7 @@
             canvas = document.getElementById('myCanvas'),
             ctx = canvas.getContext('2d'),
             heartbeatMsg = 'pong',
-            socket = new ReconnectingWebsocket('ws://' + params.websocketserver + ':' + params.websockport);
+            socket = new ReconnectingWebSocket('ws://' + params.websocketserver + ':' + params.websockport);
         var heartbeatInterval = null,
             missedHeartbeats = 0,
             ginputdelay = 0,
@@ -106,7 +107,7 @@
             rofs = 0,
             zero = true,
             buttonCount = {}
-        branch = drawCountView;
+            branch = drawInputView;
 
         if (config.width) {
             canvas.width = config.width;
@@ -116,6 +117,13 @@
         }
         if (params.inputdelay) {
             ginputdelay = params.inputdelay;
+        }
+        if (params.view)
+        {
+            if (params.view.toLowerCase() == "count")
+               branch = drawCountView;
+            if (params.view.toLowerCase() == "input")
+               branch = drawInputView;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2, canvas.width);
@@ -137,7 +145,7 @@
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2, canvas.width);
                         console.warn('Closing connection. Reason: ' + e.message);
-                        socket.close();
+                        //socket.reconnect();
                     }
                 }, 5000);
             }
@@ -145,7 +153,13 @@
         window.onunload = () => {
             socket.close();
         };
-
+        config.WiFiStatus.badimg = new Image();
+        config.WiFiStatus.badimg.src = theme + config.WiFiStatus.bad;
+        config.WiFiStatus.okimg = new Image();
+        config.WiFiStatus.okimg.src = theme +config.WiFiStatus.good;
+        config.WiFiStatus.goodimg = new Image();
+        config.WiFiStatus.goodimg.src = theme + config.WiFiStatus.good;
+        
         if (config.inputView.button) {
             for (i in config.inputView.button) {
                 config.inputView.button[i].img = new Image();
@@ -243,17 +257,29 @@
                     initButtons(buttonCount);
                     return;
                 case 'COUNTS':
-                    if (branch == drawInputView)
-                        branch = drawCountView;
-                    else
-                        branch = drawInputView;
+                    if (params.view == null)
+                    {
+                        if (branch == drawInputView)
+                            branch = drawCountView;
+                        else
+                            branch = drawInputView;
+                    }
                     return;
                 case 'Connected':
                     return;
             }
-
+            
+            if (event.data.slice(0, 1) === 'B') {
+                console.log(event.data);
+                return;
+            }
+            if (event.data.slice(0, 1) === 'b') {
+                console.log(event.data);
+                return;
+            }
             if (event.data.slice(0, 4) === 'RSSI') {
                 RSSI = event.data.slice(5);
+                console.log("RSSI:" + RSSI);
                 return;
             }
             if (event.data.charCodeAt(0) <= 1) {
@@ -265,14 +291,33 @@
                 d = event.data;
             }
             controlsObj = extractControls(d);
-             //Update buttonCount
+             //If we have last
             if("last" in buttonCount){ //if buttoncount.last exists
-               for (i in controlsObj.button){   
-                   if(buttonCount.last[i] == false && controlsObj.button[i] == true){  //If button has been released
-                       console.log(i,buttonCount[i]);
-                       buttonCount[i] += 1;
-                   }
+
+
+                switch (config.controllerType){
+                    case 'GCN':
+                        if (params.view == null){
+                            if (!(controlsObj.button.A && controlsObj.button.B && controlsObj.button.Y && controlsObj.button.X)
+                               && (buttonCount.last.A && buttonCount.last.B && buttonCount.last.X && buttonCount.last.Y)){
+                               if (branch == drawInputView)
+                                   branch = drawCountView;
+                               else
+                                   branch = drawInputView;
+                           }
+                        }
+                       break
+                   case 'N64':
+                       break
                }
+
+               //Check input count
+                for (i in controlsObj.button){   
+                    if(buttonCount.last[i] == true && controlsObj.button[i] == false){  //If button has been released
+                        console.log(i,buttonCount[i]);
+                        buttonCount[i] += 1;
+                    }
+                }
             }
             buttonCount.last = controlsObj.button;
             setTimeout(branch, ginputdelay, controlsObj);
@@ -353,12 +398,16 @@
                 }
 
                 if (RSSI != null && config.WiFiStatus) {
-                    ctx.font = config.WiFiStatus.height + ' Calibri';
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'top';
-                    ctx.fillStyle = ~~RSSI < -50 ? 'RGBA(255, 0, 0, 0.7)' : 'RGBA(0, 255, 0, 0.7)';
-                    ctx.fillText('RSSI:' + RSSI + 'dBm', config.WiFiStatus.x, config.WiFiStatus.y);
+                    //console.log("RSSI:" + RSSI);
+                    if(RSSI < -60){
+                        ctx.drawImage(config.WiFiStatus.goodimg,config.WiFiStatus.x,config.WiFiStatus.y);
+                    } else if (RSSI < -50) {
+                        ctx.drawImage(config.WiFiStatus.okimg,config.WiFiStatus.x,config.WiFiStatus.y);
+                    } else {
+                        ctx.drawImage(config.WiFiStatus.badimg,config.WiFiStatus.x,config.WiFiStatus.y);
+                    }
                 }
+                
             });
         }
         function drawCountView(controlsObj) {
@@ -378,8 +427,8 @@
                             ctx.drawImage(config.countView.button[i].img, config.countView.button[i].x, config.countView.button[i].y);
                         }
                         ctx.font = config.countView.font;
-                        ctx.fillStyle = 'black';
-                        ctx.fillText(buttonCount[i], config.countView.button[i].img.width+config.countView.button[i].x, config.countView.button[i].img.height/2+config.countView.button[i].y,100);
+                        ctx.fillStyle = 'White';
+                        ctx.fillText(buttonCount[i], config.countView.button[i].img.width+config.countView.button[i].x, (config.countView.button[i].img.height/2)+config.countView.button[i].y,100);
                     }
                 }
             });

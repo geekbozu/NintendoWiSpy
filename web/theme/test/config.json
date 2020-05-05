@@ -5,7 +5,7 @@
   "cite": false,
   "width": 200,
   "height": 50,
-  "inputdelay": 900,
+  "inputdelay": 0,
   "WiFiStatus": {
     "height": "10px",
     "x": 0,

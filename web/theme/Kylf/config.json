@@ -7,7 +7,9 @@
   "height": 200,
   "inputdelay": 0,
   "WiFiStatus": {
-    "height": "10px",
+    "good": "good.png",
+    "ok": "bad.png",
+    "bad": "baf.png",
     "x": 0,
     "y": 0
   },
@@ -132,7 +134,7 @@
     }
   },
   "countView": {
-    "font": "50px Courier",
+    "font": "50px Comic Sans",
     "button": {
       "A": {
         "x": 0,

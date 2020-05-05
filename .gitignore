@@ -1,0 +1,6 @@
+.pioenvs
+.piolibdeps
+.pio
+libdeps
+.vscode
+web/node_modules
