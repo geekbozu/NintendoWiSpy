@@ -105,6 +105,7 @@
             cxofs = 0,
             lofs = 0,
             rofs = 0,
+            deadzone = .02,
             zero = true,
             buttonCount = {}
             branch = drawInputView;
@@ -118,12 +119,14 @@
         if (params.inputdelay) {
             ginputdelay = params.inputdelay;
         }
-        if (params.view)
-        {
+        if (params.view){
             if (params.view.toLowerCase() == "count")
                branch = drawCountView;
             if (params.view.toLowerCase() == "input")
                branch = drawInputView;
+        }
+        if (params.deadzone) {
+            deadzone = params.deadzone;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawStrokeText(ctx, 'Waiting for Connection.', canvas.width / 2, canvas.height / 2, canvas.width);
@@ -371,12 +374,23 @@
                     }
                     for (i in config.inputView.stick) {
                         if (config.inputView.stick[i].yname in controlsObj.analog && config.inputView.stick[i].xname in controlsObj.analog) { // If the axis exist
-                            x = ((config.inputView.stick[i].xreverse ? -1 : 1) * config.inputView.stick[i].xrange);
-                            y = ((config.inputView.stick[i].yreverse ? 1 : -1) * config.inputView.stick[i].yrange);
-                            x *= controlsObj.analog[config.inputView.stick[i].xname];
-                            y *= controlsObj.analog[config.inputView.stick[i].yname];
+
+                            if(Math.abs(controlsObj.analog[config.inputView.stick[i].xname])<=deadzone){
+                                x = 0;
+                            }else{
+                                x = ((config.inputView.stick[i].xreverse ? -1 : 1) * config.inputView.stick[i].xrange);
+                                x *= controlsObj.analog[config.inputView.stick[i].xname];
+                            }
+
+                            if(Math.abs(controlsObj.analog[config.inputView.stick[i].yname])<=deadzone){
+                                y = 0;
+                            }else{
+                                y = ((config.inputView.stick[i].yreverse ? 1 : -1) * config.inputView.stick[i].yrange);
+                                y *= controlsObj.analog[config.inputView.stick[i].yname];
+                            }
                             x += config.inputView.stick[i].x;
                             y += config.inputView.stick[i].y;
+
                             ctx.drawImage(config.inputView.stick[i].img, x, y);
                         }
                     }
