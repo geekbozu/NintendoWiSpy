@@ -457,6 +457,10 @@
                 button.Z = !!~~data[11];
                 button.L = !!~~data[9];
                 button.R = !!~~data[10];
+                button.UP = !!~~data[12];
+                button.DOWN = !!~~data[13];
+                button.RIGHT = !!~~data[14];
+                button.LEFT = !!~~data[15];
 
                 analog.joyStickX = ((getMultiByte(data, 16) - 128) / 128) - xofs;
                 analog.joyStickY = ((getMultiByte(data, 16 + 8) - 128) / 128) - yofs;
@@ -481,10 +485,10 @@
                 button.Z = !!~~data[2];
                 button.L = !!~~data[10];
                 button.R = !!~~data[11];
-                button.up = !!~~data[4];
-                button.down = !!~~data[5];
-                button.left = !!~~data[6];
-                button.right = !!~~data[7];
+                button.UP = !!~~data[4];
+                button.DOWN = !!~~data[5];
+                button.LEFT = !!~~data[6];
+                button.RIGHT = !!~~data[7];
                 button.Cup = !!~~data[12];
                 button.Cdown = !!~~data[13];
                 button.Cleft = !!~~data[14];
@@ -518,9 +522,10 @@
             dict.L = 0;
             dict.Z = 0;
             dict.START = 0;
-            dict.left = 0;
-            dict.right = 0;
-            dict.down = 0;
+            dict.LEFT = 0;
+            dict.RIGHT = 0;
+            dict.DOWN = 0;
+            dict.UP = 0;
             dict.Cup = 0;
             dict.Cdown = 0;
             dict.Cleft = 0;

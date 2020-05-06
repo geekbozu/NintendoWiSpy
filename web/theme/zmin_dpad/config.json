@@ -1,0 +1,156 @@
+{
+  "controllerType": "GCN",
+  "theme": "Canadian Gamecube",
+  "author": "Geekboy1011",
+  "cite": false,
+  "width": 156,
+  "height": 50,
+  "inputdelay": 0,
+  "WiFiStatus": {
+      "good": "good.png",
+    "ok": "ok.png",
+    "bad": "bad.png",
+    "x": 139,
+    "y": 37
+  },
+    "inputView": {
+  "button": {
+    "A": {
+      "x": 133,
+      "y": 12,
+      "file": "A.png"
+    },
+    "B": {
+      "x": 121,
+      "y": 32,
+      "file": "B.png"
+    },
+    "L": {
+      "x": 97,
+      "y": 4,
+      "file": "L.png"
+    },
+    "R": {
+      "x": 115,
+      "y": 4,
+      "file": "R.png"
+    },
+    "Y": {
+      "x": 51,
+      "y": 19,
+      "file": "XY.png"
+    },
+    "X": {
+      "x": 84,
+      "y": 19,
+      "file": "XY.png"
+    },
+    "Z": {
+      "x": 68,
+      "y": 36,
+      "file": "Z.png"
+    },
+    "START": {
+      "x": 101,
+      "y": 29,
+      "file": "S.png"
+    },
+    "DOWN":{
+      "x": 19,
+      "y": 37,
+      "file": "down.png"
+    },
+    "LEFT":{
+      "x": 2,
+      "y": 19,
+      "file": "left.png"
+    },
+    "RIGHT":{
+      "x": 39,
+      "y": 19,
+      "file": "right.png"
+    },
+    "UP":{
+      "x": 19,
+      "y": 2,
+      "file": "up.png"
+    }
+  },
+  "stick": {
+    "joyStick": {
+        "xname": "joyStickX",
+        "yname": "joyStickY",
+        "file": "ST.png",
+        "x": 21,
+        "y": 21,
+        "xrange": 24,
+        "yrange": 24,
+        "xreverse": false,
+        "yreverse": false
+    },
+    "cStick": {
+        "xname": "cStickX",
+        "yname": "cStickY",
+        "file": "C.png",
+        "x": 69,
+        "y": 21,
+        "xrange": 24,
+        "yrange": 24,
+        "xreverse": false,
+        "yreverse": false
+    }
+  },
+  "static": {
+    "background": {
+        "x": 0,
+        "y": 0,
+        "file": "Background.png"
+    }
+  }
+},
+  "countView": {
+    "font": "50px Comic Sans",
+    "button": {
+      "A": {
+        "x": 0,
+        "y": 0,
+        "file": "A.png"
+      },
+      "B": {
+        "x": 0,
+        "y": 90,
+        "file": "B.png"
+      },
+      "L": {
+        "x": 200,
+        "y": 0,
+        "file": "L.png"
+      },
+      "R": {
+        "x": 200,
+        "y": 90,
+        "file": "R.png"
+      },
+      "X": {
+        "x": 400,
+        "y": 0,
+        "file": "X.png"
+      },
+      "Y": {
+        "x": 400,
+        "y": 90,
+        "file": "Y.png"
+      },
+      "Z": {
+        "x": 600,
+        "y": 0,
+        "file": "Z.png"
+      },
+      "START": {
+        "x": 600,
+        "y": 90,
+        "file": "S.png"
+      }
+    }
+  }
+}
