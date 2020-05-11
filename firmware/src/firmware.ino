@@ -23,9 +23,10 @@ ADC_MODE(ADC_VCC);
 #define MODEPIN_GC 13
 #define BIT_PIN 14
 #define FRAME_PIN 15
+
 #define N64_PIN 5
-#define N64_PREFIX 8
-#define N64_BITCOUNT 32
+#define N64_PREFIX 9
+#define N64_BITCOUNT 33
 
 #define SNES_LATCH 3
 #define SNES_DATA 4
@@ -67,7 +68,7 @@ ADC_MODE(ADC_VCC);
 //#define MODE_SNES
 //#define MODE_NES
 // Bridge one of the analog GND to the right analog IN to enable your selected mode
-#define MODE_GC
+#define MODE_DETECT
 // ---------------------------------------------------------------------------------
 char use_ssid[32] = "";
 char use_password[32] = "";
@@ -76,7 +77,7 @@ char use_password[32] = "";
 const unsigned char GC_PREFIX_STRING[25] = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1};
                                        //     B  1  0  0  0  0  0  0  0  0  0  0  0  0  1  1  0  0  0  0  0  0  0  0  1
 //const unsigned char GC_PREFIX_STRING[24] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-const unsigned char N64_PREFIX_STRING[8] = {0, 0, 0, 0, 0, 0, 1, 1};
+const unsigned char N64_PREFIX_STRING[9] = {0, 0, 0, 0, 0, 0, 0, 1, 1};
 
 // Declare some space to store the bits we read from a controller.
 volatile unsigned char defined_bits = 1;
@@ -332,7 +333,6 @@ void IRAM_ATTR loop_gc()
 
     }
     ets_intr_lock();
-    defined_bits = GC_PREFIX + GC_BITCOUNT;
     
     memset(rawData, 0, sizeof(rawData)); //Clear frame incase we got bad frame
     trans_pending = false;
@@ -407,7 +407,11 @@ void IRAM_ATTR loop_gc()
             }else{
                 rawData[0] = 'b';
             }
-            
+            if(rawData[1]==ONE){
+                rawData[1] = 'G';
+            }else{
+                rawData[1] = 'g';
+            }            
             webSocket.broadcastTXT(rawData, GC_BITCOUNT+GC_PREFIX );
             
             //Serial.print("Bad GCN Frame: "); Serial.printf("%s"rawData); Serial.println(' ');
@@ -417,21 +421,35 @@ void IRAM_ATTR loop_gc()
     }
 }
 
-void loop_N64()
+void IRAM_ATTR loop_N64()
 {
-    unsigned long start = micros();
-    while (PIN_READ(5))
+ 
+    uint32_t start = ESP.getCycleCount();
+    uint32_t b = ESP.getCycleCount();
+
+    digitalWrite(FRAME_PIN, 1);
+    while (1)
     {
-        if ((micros() - start) > 150)
+        if(PIN_READ(5) == 0)
+        {
+            start = ESP.getCycleCount();
+        }
+
+        if ((ESP.getCycleCount() - start) > (CPU_US_CYCLE*100))
         {
             break;
         }
+        if ((ESP.getCycleCount() - b) > (CPU_MS_CYCLE))
+        {
+            digitalWrite(FRAME_PIN, 0);
+            Serial.print("NAYNAY\r\n");
+            return;
+        }
+        //Serial.print(ESP.getCycleCount()-b);
+
     }
     ets_intr_lock();
-
-
-    defined_bits = N64_PREFIX + N64_BITCOUNT;
-    digitalWrite(10, 1);
+    
     memset(rawData, 0, sizeof(rawData)); //Clear frame incase we got bad frame
     trans_pending = false;
     defined_bits = N64_PREFIX + N64_BITCOUNT;
@@ -439,19 +457,20 @@ void loop_N64()
     unsigned char *rawDataPtr = rawData;
     while (defined_bits != 0)
     {
-        digitalWrite(14, 1);
+        
 
         // Wait ~2us between line reads
 
         while (PIN_READ(5)) //Wait for low transition
         {
         }
+        digitalWrite(BIT_PIN, 1);
         clock = ESP.getCycleCount();
         while (!PIN_READ(5)) //Wait for High transition
         {
         }
-
-        if ((ESP.getCycleCount() - clock) > 300)
+        digitalWrite(BIT_PIN, 0);
+        if ((ESP.getCycleCount() - clock) > (CPU_US_CYCLE*1.5))
         { //If Low for more then 1us
             *rawDataPtr = 0;
         }
@@ -460,45 +479,60 @@ void loop_N64()
             *rawDataPtr = 1;
         }
 
-        digitalWrite(14, 0);
+       // digitalWrite(BIT_PIN, 0);
         ++rawDataPtr;
         defined_bits--;
     }
     trans_pending = true;
-    digitalWrite(10, 0);
+    digitalWrite(FRAME_PIN, 0);
     ets_intr_unlock();
+    
     if (trans_pending)
     {
+        //rawData[23] = 0;
         if (memcmp(rawData, N64_PREFIX_STRING, sizeof(N64_PREFIX_STRING)) == 0)
         { //Check that we recieved a packet validly
-            //Serial.print("Good Frame: ");
-            for (unsigned char i = N64_PREFIX; i < N64_PREFIX + N64_BITCOUNT; i++)
-            {
-                rawData[i] = (rawData[i] ? ONE : ZERO); //Compat with Original hardware
-                if (use_serial)
-                {
-                    Serial.write(rawData[i]);
-                }
-            }
             if (use_serial)
             {
+                for (unsigned char i = N64_PREFIX; i < N64_PREFIX + N64_BITCOUNT; i++)
+                {
+                    rawData[i] = (rawData[i] ? ONE : ZERO); //Compat with Original hardware
+                    if (use_serial)
+                    {
+                        Serial.write(rawData[i]);
+                    }
+                }
                 Serial.write(SPLIT);
             }
             else
             {
-                webSocket.broadcastTXT(rawData + N64_PREFIX, N64_BITCOUNT - 1);
+               webSocket.broadcastTXT(rawData + N64_PREFIX, N64_BITCOUNT - 1);
+
             }
+
         }
-        else
+        else 
         {
-            for (unsigned char i = 0; i < N64_PREFIX + N64_BITCOUNT; i++)
-            {
-                rawData[i] = (rawData[i] ? ONE : ZERO); //Compat with Original hardware
+            for ( unsigned char i = 0 ; i < N64_PREFIX + N64_BITCOUNT; i++ ) {
+                rawData[i] = (rawData[i] ? ONE : ZERO );  //Compat with Original hardware
                 //Serial.write(rawData[i]);
+            
             }
-            Serial.print("Bad N64 Frame: ");
-            Serial.printf("%s", rawData);
-            Serial.println(' ');
+            
+            if(rawData[0]==ONE){
+                rawData[0] = 'B';
+            }else{
+                rawData[0] = 'b';
+            }
+            if(rawData[1]==ONE){
+                rawData[1] = 'N';
+            }else{
+                rawData[1] = 'n';
+            }
+            
+            webSocket.broadcastTXT(rawData, N64_BITCOUNT+N64_PREFIX );
+            
+            //Serial.print("Bad GCN Frame: "); Serial.printf("%s"rawData); Serial.println(' ');
         }
         memset(rawData, 0, sizeof(rawData)); //Clear frame incase we got bad frame
         trans_pending = false;
@@ -579,6 +613,8 @@ void setup()
     ESP.wdtEnable(WDTO_8S);
     
     Serial.printf("VCC:[ %u]\r\n", ESP.getVcc());
+
+    
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -616,6 +652,7 @@ void IRAM_ATTR loop()
             Serial.printf("VCC:[ %u]\r\n", ESP.getVcc());
     Serial.printf("MEM: %d,%d\r\n",ESP.getFreeHeap(),ESP.getHeapFragmentation());
     Serial.printf("WiFi Status:[ %u]\r\n", WiFi.status());
+    digitalWrite(2,HIGH);
     }
   /*  if ((millis() - mdnsMillis) > 36000000)
     {
@@ -649,4 +686,5 @@ void IRAM_ATTR loop()
     Serial.printf("MEM: %d,%d\r\n",ESP.getFreeHeap(),ESP.getHeapFragmentation());
     Serial.printf("WiFi Status:[ %u]\r\n", WiFi.status());
     */
+    
 }

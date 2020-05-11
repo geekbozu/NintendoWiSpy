@@ -6,10 +6,13 @@
   "width": 176,
   "height": 176,
   "WiFiStatus": {
-    "height": "10px",
-    "x": 0,
-    "y": 0
+      "good": "good.png",
+    "ok": "ok.png",
+    "bad": "bad.png",
+    "x": 139,
+    "y": 37
   },
+    "inputView": {  
   "button": {
   "A": {
       "x": 123,
@@ -81,28 +84,28 @@
       "height": 10,
       "file": "circle.png"
     },
-    "down": {
+    "DOWN": {
       "x": 32,
       "y": 59,
       "width": 10,
       "height": 10,
       "file": "circle.png"
     },
-    "up": {
+    "UP": {
       "x": 32,
       "y": 43,
       "width": 10,
       "height": 10,
       "file": "circle.png"
     },
-    "left": {
+    "LEFT": {
       "x": 24,
       "y": 51,
       "width": 10,
       "height": 10,
       "file": "circle.png"
     },
-    "right": {
+    "RIGHT": {
       "x": 41,
       "y": 51,
       "width": 10,
@@ -128,5 +131,6 @@
         "file": "pad.png"
     }
   }
+},
+  "countView": {}
 }
-
